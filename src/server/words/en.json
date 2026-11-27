@@ -1,0 +1,382 @@
+{
+  "id": "en-general",
+  "name": "English: General",
+  "pairs": [
+    {
+      "civilian": "Coffee",
+      "doppelganger": "Tea",
+      "aliases": [],
+      "difficulty": "medium"
+    },
+    {
+      "civilian": "Cat",
+      "doppelganger": "Tiger",
+      "aliases": [
+        "kitten"
+      ],
+      "difficulty": "medium"
+    },
+    {
+      "civilian": "Beach",
+      "doppelganger": "Desert",
+      "aliases": [
+        "seaside"
+      ],
+      "difficulty": "easy"
+    },
+    {
+      "civilian": "Guitar",
+      "doppelganger": "Violin",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Pizza",
+      "doppelganger": "Burger",
+      "aliases": [],
+      "difficulty": "medium"
+    },
+    {
+      "civilian": "Doctor",
+      "doppelganger": "Nurse",
+      "aliases": [
+        "physician"
+      ],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Train",
+      "doppelganger": "Bus",
+      "aliases": [],
+      "difficulty": "medium"
+    },
+    {
+      "civilian": "Facebook",
+      "doppelganger": "Instagram",
+      "aliases": [
+        "fb"
+      ],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Rain",
+      "doppelganger": "Snow",
+      "aliases": [],
+      "difficulty": "medium"
+    },
+    {
+      "civilian": "Football",
+      "doppelganger": "Cricket",
+      "aliases": [
+        "soccer"
+      ],
+      "difficulty": "easy"
+    },
+    {
+      "civilian": "Mango",
+      "doppelganger": "Jackfruit",
+      "aliases": [],
+      "difficulty": "medium"
+    },
+    {
+      "civilian": "Phone",
+      "doppelganger": "Tablet",
+      "aliases": [
+        "mobile",
+        "smartphone"
+      ],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Wedding",
+      "doppelganger": "Birthday",
+      "aliases": [
+        "marriage"
+      ],
+      "difficulty": "medium"
+    },
+    {
+      "civilian": "Moon",
+      "doppelganger": "Sun",
+      "aliases": [],
+      "difficulty": "easy"
+    },
+    {
+      "civilian": "Pen",
+      "doppelganger": "Pencil",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Winter",
+      "doppelganger": "Summer",
+      "aliases": [],
+      "difficulty": "easy"
+    },
+    {
+      "civilian": "Lion",
+      "doppelganger": "Leopard",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Apple",
+      "doppelganger": "Orange",
+      "aliases": [],
+      "difficulty": "medium"
+    },
+    {
+      "civilian": "River",
+      "doppelganger": "Lake",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Chef",
+      "doppelganger": "Waiter",
+      "aliases": [
+        "cook"
+      ],
+      "difficulty": "medium"
+    },
+    {
+      "civilian": "Movie",
+      "doppelganger": "Play",
+      "aliases": [
+        "film",
+        "cinema"
+      ],
+      "difficulty": "medium"
+    },
+    {
+      "civilian": "Painting",
+      "doppelganger": "Photograph",
+      "aliases": [
+        "painting"
+      ],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Island",
+      "doppelganger": "Mountain",
+      "aliases": [],
+      "difficulty": "easy"
+    },
+    {
+      "civilian": "Chocolate",
+      "doppelganger": "Candy",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Teacher",
+      "doppelganger": "Professor",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Airplane",
+      "doppelganger": "Helicopter",
+      "aliases": [
+        "plane"
+      ],
+      "difficulty": "medium"
+    },
+    {
+      "civilian": "Robot",
+      "doppelganger": "Alien",
+      "aliases": [],
+      "difficulty": "easy"
+    },
+    {
+      "civilian": "Castle",
+      "doppelganger": "Palace",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Honey",
+      "doppelganger": "Sugar",
+      "aliases": [],
+      "difficulty": "medium"
+    },
+    {
+      "civilian": "Clock",
+      "doppelganger": "Watch",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Dog",
+      "doppelganger": "Wolf",
+      "aliases": [
+        "puppy"
+      ],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Sea",
+      "doppelganger": "Pool",
+      "aliases": [],
+      "difficulty": "medium"
+    },
+    {
+      "civilian": "Snake",
+      "doppelganger": "Lizard",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Bread",
+      "doppelganger": "Rice",
+      "aliases": [],
+      "difficulty": "medium"
+    },
+    {
+      "civilian": "Shoes",
+      "doppelganger": "Socks",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Hospital",
+      "doppelganger": "School",
+      "aliases": [],
+      "difficulty": "medium"
+    },
+    {
+      "civilian": "Email",
+      "doppelganger": "Letter",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Summer",
+      "doppelganger": "Spring",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Tiger",
+      "doppelganger": "Lion",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Milk",
+      "doppelganger": "Water",
+      "aliases": [],
+      "difficulty": "medium"
+    },
+    {
+      "civilian": "Hat",
+      "doppelganger": "Cap",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Bike",
+      "doppelganger": "Car",
+      "aliases": [],
+      "difficulty": "medium"
+    },
+    {
+      "civilian": "Star",
+      "doppelganger": "Planet",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Soup",
+      "doppelganger": "Salad",
+      "aliases": [],
+      "difficulty": "medium"
+    },
+    {
+      "civilian": "Book",
+      "doppelganger": "Magazine",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Fire",
+      "doppelganger": "Smoke",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Gold",
+      "doppelganger": "Silver",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Knife",
+      "doppelganger": "Fork",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Camera",
+      "doppelganger": "Phone",
+      "aliases": [],
+      "difficulty": "medium"
+    },
+    {
+      "civilian": "Bee",
+      "doppelganger": "Wasp",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Rose",
+      "doppelganger": "Tulip",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Desert",
+      "doppelganger": "Forest",
+      "aliases": [],
+      "difficulty": "medium"
+    },
+    {
+      "civilian": "King",
+      "doppelganger": "Queen",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Thunder",
+      "doppelganger": "Lightning",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Butter",
+      "doppelganger": "Cheese",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Ocean",
+      "doppelganger": "River",
+      "aliases": [],
+      "difficulty": "medium"
+    },
+    {
+      "civilian": "Candle",
+      "doppelganger": "Lamp",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Soccer",
+      "doppelganger": "Rugby",
+      "aliases": [
+        "football"
+      ],
+      "difficulty": "hard"
+    }
+  ]
+}

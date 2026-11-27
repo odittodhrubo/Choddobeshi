@@ -1,0 +1,96 @@
+{
+  "id": "bn-general",
+  "name": "বাংলা: General",
+  "pairs": [
+    {
+      "civilian": "ইলিশ",
+      "doppelganger": "রুই",
+      "aliases": [],
+      "difficulty": "medium"
+    },
+    {
+      "civilian": "চা",
+      "doppelganger": "কফি",
+      "aliases": [],
+      "difficulty": "medium"
+    },
+    {
+      "civilian": "রিকশা",
+      "doppelganger": "সিএনজি",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "বিরিয়ানি",
+      "doppelganger": "খিচুড়ি",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "ঈদ",
+      "doppelganger": "পূজা",
+      "aliases": [],
+      "difficulty": "easy"
+    },
+    {
+      "civilian": "আম",
+      "doppelganger": "কাঁঠাল",
+      "aliases": [],
+      "difficulty": "medium"
+    },
+    {
+      "civilian": "নদী",
+      "doppelganger": "সাগর",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "বৃষ্টি",
+      "doppelganger": "রোদ",
+      "aliases": [],
+      "difficulty": "medium"
+    },
+    {
+      "civilian": "ক্রিকেট",
+      "doppelganger": "ফুটবল",
+      "aliases": [],
+      "difficulty": "easy"
+    },
+    {
+      "civilian": "চাঁদ",
+      "doppelganger": "সূর্য",
+      "aliases": [],
+      "difficulty": "easy"
+    },
+    {
+      "civilian": "শীত",
+      "doppelganger": "গরম",
+      "aliases": [],
+      "difficulty": "easy"
+    },
+    {
+      "civilian": "বাঘ",
+      "doppelganger": "সিংহ",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "ঢাকা",
+      "doppelganger": "চট্টগ্রাম",
+      "aliases": [],
+      "difficulty": "medium"
+    },
+    {
+      "civilian": "কলম",
+      "doppelganger": "পেন্সিল",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "বিয়ে",
+      "doppelganger": "জন্মদিন",
+      "aliases": [],
+      "difficulty": "medium"
+    }
+  ]
+}
