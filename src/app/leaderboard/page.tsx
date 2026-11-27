@@ -2,40 +2,39 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { supabase, supabaseEnabled } from "@/lib/supabase/client";
+import { supabaseEnabled } from "@/lib/supabase/client";
+import { ensureSession, getBoard, getFriendsBoard, type BoardRow } from "@/lib/supabase/auth";
 import { Avatar } from "@/components/ui";
 
-interface Row {
-  user_id: string;
-  username: string | null;
-  points: number;
-  wins: number;
-  games: number;
-}
+type Tab = "all" | "week" | "friends";
 
 export default function LeaderboardPage() {
-  const [rows, setRows] = useState<Row[] | null>(null);
-  const [error, setError] = useState("");
+  const [tab, setTab] = useState<Tab>("week");
+  const [rows, setRows] = useState<BoardRow[] | null>(null);
 
   useEffect(() => {
+    let live = true;
+    setRows(null);
     void (async () => {
-      const sb = supabase();
-      if (!sb) {
-        setError("Leaderboard is not configured yet.");
-        setRows([]);
+      if (!supabaseEnabled) {
+        if (live) setRows([]);
         return;
       }
-      const { data, error } = await sb
-        .from("leaderboard")
-        .select("user_id,username,points,wins,games");
-      if (error) {
-        setError("Leaderboard will appear once games have been played.");
-        setRows([]);
-      } else {
-        setRows((data as Row[]) ?? []);
-      }
+      await ensureSession();
+      const data =
+        tab === "friends" ? await getFriendsBoard() : await getBoard(tab === "week" ? "week" : "all");
+      if (live) setRows(data);
     })();
-  }, []);
+    return () => {
+      live = false;
+    };
+  }, [tab]);
+
+  const tabs: [Tab, string][] = [
+    ["week", "This week"],
+    ["all", "All time"],
+    ["friends", "Friends"],
+  ];
 
   return (
     <main className="flex flex-1 flex-col gap-5">
@@ -46,6 +45,20 @@ export default function LeaderboardPage() {
         </Link>
       </header>
 
+      <div className="grid grid-cols-3 gap-1.5">
+        {tabs.map(([id, label]) => (
+          <button
+            key={id}
+            onClick={() => setTab(id)}
+            className={`min-h-0 rounded-xl border-2 px-2 py-2 text-sm font-semibold transition ${
+              tab === id ? "border-brand bg-brand/20 text-white" : "border-line bg-panel2 text-muted hover:text-ink"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
       {!supabaseEnabled && (
         <p className="text-sm text-muted">Sign-in is not set up, so there is no global leaderboard.</p>
       )}
@@ -53,7 +66,9 @@ export default function LeaderboardPage() {
       {rows === null ? (
         <p className="text-center text-muted">Loading…</p>
       ) : rows.length === 0 ? (
-        <p className="text-center text-muted">{error || "No scores yet — play a game!"}</p>
+        <p className="text-center text-muted">
+          {tab === "friends" ? "Add friends to compare scores." : "No scores yet — play a game!"}
+        </p>
       ) : (
         <section className="flex flex-col gap-2">
           {rows.map((r, i) => (

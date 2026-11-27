@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { ScreenProps } from "@/components/types";
-import { Timer, WordBadge, Avatar, MeetingButton } from "@/components/ui";
+import { Timer, WordBadge, Avatar, MeetingButton, DetectivePanel } from "@/components/ui";
 
 export default function Clue({ view, send }: ScreenProps) {
   const { me, room } = view;
@@ -27,7 +27,9 @@ export default function Clue({ view, send }: ScreenProps) {
         <Timer endsAt={room.phaseEndsAt} />
       </div>
 
-      <WordBadge word={me.word} isChameleon={me.isChameleon} />
+      <WordBadge word={me.word} isChameleon={me.isChameleon} specialRole={me.specialRole} />
+
+      <DetectivePanel view={view} send={send} />
 
       <section className="flex flex-1 flex-col gap-2 overflow-y-auto">
         {room.turnOrder.map((id, i) => {
@@ -82,6 +84,12 @@ export default function Clue({ view, send }: ScreenProps) {
 
       {me.alive && (
         <MeetingButton used={room.emergencyUsedBy.includes(me.id)} send={send} />
+      )}
+
+      {me.isHost && !isMyTurn && (
+        <button className="btn-ghost" onClick={() => send("turn:skip")}>
+          Skip {byId(speakerId)?.name ?? "this"}&apos;s turn (AFK)
+        </button>
       )}
     </main>
   );

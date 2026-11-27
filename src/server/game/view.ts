@@ -18,20 +18,29 @@ export function viewFor(room: Room, playerId: string): PlayerView {
       revealAll || (!p.alive && room.settings.revealRoleOnEject) ? p.role : undefined,
     hasVoted: room.phase === "VOTING" ? p.id in room.votes : undefined,
     hasAnswered: room.phase === "ANSWER" ? p.id in room.answers : undefined,
+    ready: room.phase === "ROLE_REVEAL" ? room.ready.includes(p.id) : undefined,
+    muted: room.muted.includes(p.id) || undefined,
+    frame: p.frame,
+    color: p.color,
   }));
 
-  // Answers are shown to everyone from DISCUSSION onward, hidden during ANSWER.
-  const answersVisible = ["DISCUSSION", "VOTING", "VOTE_RESULT", "LAST_GUESS", "GAME_OVER"].includes(
-    room.phase,
-  );
+  // Jester and Detective are told their role. Impostor roles never are:
+  // the Doppelganger must not learn it, and the Chameleon already knows.
+  const specialRole =
+    me.role === "jester" || me.role === "detective" ? me.role : undefined;
+
+  const lastVote = room.voteLog[room.voteLog.length - 1];
 
   return {
     me: {
       id: me.id,
       word: me.word ?? null,
       isChameleon: me.role === "chameleon",
+      specialRole,
       alive: me.alive,
       isHost: me.isHost,
+      myVote: room.phase === "VOTING" ? room.votes[me.id] : undefined,
+      peek: room.peeks[me.id],
     },
     room: {
       code: room.code,
@@ -43,7 +52,8 @@ export function viewFor(room: Room, playerId: string): PlayerView {
       turnIndex: room.turnIndex,
       clues: room.clues,
       mode: room.settings.mode,
-      answers: answersVisible ? room.answers : undefined,
+      // Finished answer rounds only: an in-progress round stays hidden.
+      answerRounds: room.answerHistory.length ? room.answerHistory : undefined,
       players,
       lastEliminated: room.lastEliminated,
       guesserId: room.guesserId,
@@ -52,6 +62,7 @@ export function viewFor(room: Room, playerId: string): PlayerView {
       gamesPlayed: room.gamesPlayed,
       emergencyUsedBy: room.emergencyUsedBy,
       voteLog: over ? room.voteLog : undefined,
+      lastVotes: room.phase === "VOTE_RESULT" ? lastVote?.votes : undefined,
       voteTally: room.phase === "VOTE_RESULT" ? countVotes(room) : undefined,
       ...(over && {
         civilianWord: room.civilianWord,

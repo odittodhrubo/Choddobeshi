@@ -1,5 +1,6 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { Room } from "../shared/types";
+import { DEFAULT_SETTINGS } from "../shared/types";
 
 // Room snapshots, so a redeploy/restart doesn't wipe active games.
 // All no-ops until the secret key is configured.
@@ -62,7 +63,7 @@ export async function loadAllRooms(): Promise<Room[]> {
     const { data, error } = await sb.from("rooms").select("state");
     if (error || !data) return [];
     return data.map((r) => {
-      const room = (r as { state: Room }).state;
+      const room = normalizeRoom((r as { state: Room }).state);
       room.timer = undefined;
       for (const p of room.players) {
         p.connected = false;
@@ -73,4 +74,24 @@ export async function loadAllRooms(): Promise<Room[]> {
   } catch {
     return [];
   }
+}
+
+/** Fill any fields added since the snapshot was written, so old rooms still load. */
+function normalizeRoom(room: Room): Room {
+  room.settings = { ...DEFAULT_SETTINGS, ...room.settings };
+  room.answers ??= {};
+  room.answerHistory ??= [];
+  room.ready ??= [];
+  room.muted ??= [];
+  room.bans ??= [];
+  room.peeks ??= {};
+  room.reports ??= [];
+  room.pairKey ??= null;
+  room.voteLog ??= [];
+  room.emergencyUsedBy ??= [];
+  room.aiRecent ??= [];
+  room.scores ??= {};
+  room.gamesPlayed ??= 0;
+  for (const v of room.voteLog) v.votes ??= {};
+  return room;
 }

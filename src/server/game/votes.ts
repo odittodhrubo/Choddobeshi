@@ -1,4 +1,5 @@
 import type { Room } from "../../shared/types";
+import { teamOf } from "../../shared/types";
 
 /** Count votes (missing vote = skip). Returns map target -> count, "skip" included. */
 export function countVotes(room: Room): Record<string, number> {
@@ -22,10 +23,10 @@ export function tallyVotes(room: Room): string | null {
 
 export function checkWinner(room: Room): Room["winner"] {
   const alive = room.players.filter((p) => p.alive);
-  const impostorsAlive = alive.filter((p) => p.role !== "civilian").length;
-  const civiliansAlive = alive.length - impostorsAlive;
-  const impostorIds = room.players.filter((p) => p.role !== "civilian").map((p) => p.id);
-  const civilianIds = room.players.filter((p) => p.role === "civilian").map((p) => p.id);
+  const impostorsAlive = alive.filter((p) => teamOf(p.role) === "impostors").length;
+  const civiliansAlive = alive.filter((p) => teamOf(p.role) === "civilians").length;
+  const impostorIds = room.players.filter((p) => teamOf(p.role) === "impostors").map((p) => p.id);
+  const civilianIds = room.players.filter((p) => teamOf(p.role) === "civilians").map((p) => p.id);
 
   if (impostorsAlive === 0) return { team: "civilians", playerIds: civilianIds };
   if (impostorsAlive >= civiliansAlive) return { team: "impostors", playerIds: impostorIds };

@@ -3,7 +3,9 @@ import type { Player, Room } from "../../shared/types";
 import { DEFAULT_SETTINGS } from "../../shared/types";
 import { tallyVotes, countVotes, checkWinner } from "../game/votes";
 import { isCorrectGuess, normalize } from "../game/guess";
-import { defaultCounts, makeTurnOrder } from "../game/roles";
+import { defaultCounts, makeTurnOrder, validateRoleMix } from "../game/roles";
+import { teamOf, featuredPack, levelFor } from "../../shared/types";
+import { containsProfanity } from "../moderation";
 import { validateClue } from "../game/engine";
 
 function mkPlayer(id: string, role: Player["role"], alive = true): Player {
@@ -44,6 +46,13 @@ function mkRoom(players: Player[], votes: Record<string, string> = {}, round = 1
     emergencyUsedBy: [],
     voteLog: [],
     aiRecent: [],
+    answerHistory: [],
+    ready: [],
+    muted: [],
+    bans: [],
+    peeks: {},
+    pairKey: null,
+    reports: [],
   };
 }
 
@@ -181,5 +190,61 @@ describe("validateClue", () => {
 describe("normalize", () => {
   it("strips punctuation and lowercases", () => {
     expect(normalize("  Café! ")).toBe("café");
+  });
+});
+
+describe("jester and detective", () => {
+  it("teamOf puts the detective with civilians and the jester on neither side", () => {
+    expect(teamOf("detective")).toBe("civilians");
+    expect(teamOf("civilian")).toBe("civilians");
+    expect(teamOf("jester")).toBe("neutral");
+    expect(teamOf("doppelganger")).toBe("impostors");
+    expect(teamOf("chameleon")).toBe("impostors");
+    expect(teamOf("imposter")).toBe("impostors");
+  });
+
+  it("a living jester or detective is never counted as an impostor", () => {
+    const room = mkRoom([
+      mkPlayer("a", "civilian"),
+      mkPlayer("b", "detective"),
+      mkPlayer("c", "jester"),
+      mkPlayer("d", "chameleon"),
+      mkPlayer("e", "civilian"),
+    ]);
+    // 3 civilians-side vs 1 impostor -> no winner yet, jester does not tip parity.
+    expect(checkWinner(room)).toBeNull();
+  });
+
+  it("civilians win when the last impostor is gone, jester excluded from winners", () => {
+    const room = mkRoom([
+      mkPlayer("a", "civilian"),
+      mkPlayer("b", "detective"),
+      mkPlayer("c", "jester"),
+      mkPlayer("d", "chameleon", false),
+    ]);
+    const w = checkWinner(room);
+    expect(w?.team).toBe("civilians");
+    expect(w?.playerIds.sort()).toEqual(["a", "b"]);
+  });
+
+  it("validateRoleMix rejects specials that leave no plain civilian", () => {
+    const s = { ...DEFAULT_SETTINGS, jester: true, detective: true, doppelgangers: 1, chameleons: 1 } as typeof DEFAULT_SETTINGS;
+    expect(() => validateRoleMix(4, s)).toThrow();
+    expect(() => validateRoleMix(7, s)).not.toThrow();
+  });
+});
+
+describe("misc rules", () => {
+  it("featuredPack is stable within a UTC day", () => {
+    const t = Date.UTC(2026, 0, 5, 3);
+    expect(featuredPack(t)).toBe(featuredPack(t + 3600_000));
+  });
+  it("levelFor grows with points", () => {
+    expect(levelFor(0)).toBe(1);
+    expect(levelFor(1000)).toBeGreaterThan(levelFor(10));
+  });
+  it("profanity filter catches leetspeak", () => {
+    expect(containsProfanity("sh1t")).toBe(true);
+    expect(containsProfanity("hello friend")).toBe(false);
   });
 });
