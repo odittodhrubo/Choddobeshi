@@ -1,7 +1,8 @@
 import { createServer } from "node:http";
 import next from "next";
 import { Server } from "socket.io";
-import { registerHandlers } from "./src/server/rooms";
+import { registerHandlers, attachUser, restoreRooms } from "./src/server/rooms";
+import { verifyToken } from "./src/server/supabase";
 
 const dev = process.env.NODE_ENV !== "production";
 const port = Number(process.env.PORT ?? 3000);
@@ -19,7 +20,19 @@ app.prepare().then(() => {
     allowUpgrades: true,
   });
 
-  io.on("connection", (socket) => registerHandlers(io, socket));
+  io.on("connection", (socket) => {
+    socket.data.userId = null;
+    registerHandlers(io, socket); // sync: never miss the client's immediate room:join
+
+    // Verify the Supabase token (if any) in parallel; backfill once known. Guests allowed.
+    const token = socket.handshake.auth?.token as string | undefined;
+    void verifyToken(token).then((uid) => {
+      socket.data.userId = uid;
+      if (uid) attachUser(socket, uid);
+    });
+  });
+
+  void restoreRooms(io); // reload any games that were live before a restart
 
   httpServer.listen(port, hostname, () => {
     console.log(`> Choddobeshi ready on http://${hostname}:${port} (dev=${dev})`);

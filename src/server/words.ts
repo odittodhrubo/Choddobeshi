@@ -2,6 +2,7 @@ import en from "./words/en.json";
 import bn from "./words/bn.json";
 import movies from "./words/movies.json";
 import food from "./words/food.json";
+import geography from "./words/geography.json";
 
 export type Difficulty = "easy" | "medium" | "hard" | "mixed";
 
@@ -21,6 +22,7 @@ const packs: Record<string, Pack> = {
   [en.id]: en as Pack,
   [food.id]: food as Pack,
   [movies.id]: movies as Pack,
+  [geography.id]: geography as Pack,
   [bn.id]: bn as Pack,
 };
 

@@ -1,8 +1,18 @@
 "use client";
 import { io, type Socket } from "socket.io-client";
 
+let authToken: string | null = null;
+export function setSocketToken(t: string | null): void {
+  authToken = t;
+}
+
 // No URL: connects to the same origin that served the page.
-export const socket: Socket = io({ autoConnect: false, path: "/socket.io" });
+// `auth` is a function, so the current token is sent on every (re)connect.
+export const socket: Socket = io({
+  autoConnect: false,
+  path: "/socket.io",
+  auth: (cb) => cb({ token: authToken ?? undefined }),
+});
 
 /** Stable per-browser player id (survives refresh). */
 export function getPlayerId(): string {

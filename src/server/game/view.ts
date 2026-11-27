@@ -1,6 +1,7 @@
 import type { Server } from "socket.io";
 import type { PlayerView, PublicPlayer, Room } from "../../shared/types";
 import { countVotes } from "./votes";
+import { saveRoom } from "../persistence";
 
 export function viewFor(room: Room, playerId: string): PlayerView {
   const me = room.players.find((p) => p.id === playerId)!;
@@ -64,4 +65,5 @@ export function broadcast(io: Server, room: Room): void {
   for (const p of room.players) {
     if (p.socketId) io.to(p.socketId).emit("state", viewFor(room, p.id));
   }
+  saveRoom(room); // debounced snapshot for restart-survival
 }
