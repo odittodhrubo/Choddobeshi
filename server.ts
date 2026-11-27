@@ -8,7 +8,8 @@ import { refreshContent } from "./src/server/content";
 
 const dev = process.env.NODE_ENV !== "production";
 const port = Number(process.env.PORT ?? 3000);
-const hostname = process.env.HOSTNAME ?? "0.0.0.0";
+// Not HOSTNAME: Docker hosts set that to the container id. Listen on all interfaces.
+const hostname = process.env.BIND_HOST ?? "0.0.0.0";
 
 const app = next({ dev });
 const handle = app.getRequestHandler();
