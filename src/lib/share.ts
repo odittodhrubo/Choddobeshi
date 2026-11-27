@@ -40,7 +40,9 @@ export function makeRecapImage(view: PlayerView): Promise<Blob | null> {
       ? ["Civilians win!", "#39d98a"]
       : w?.team === "guesser"
         ? ["Impostor guessed it!", "#ffcf5c"]
-        : ["Impostors win!", "#ff5d6c"];
+        : w?.team === "jester"
+          ? ["The Jester wins!", "#ffcf5c"]
+          : ["Impostors win!", "#ff5d6c"];
   ctx.fillStyle = result[1];
   ctx.font = "800 96px system-ui, sans-serif";
   ctx.fillText(result[0], center, 310);
@@ -69,7 +71,7 @@ export function makeRecapImage(view: PlayerView): Promise<Blob | null> {
   // Meta
   ctx.fillStyle = "#8b95b5";
   ctx.font = "500 38px system-ui, sans-serif";
-  const rounds = room.mode === "questions" ? "1 round" : `${room.round} round${room.round === 1 ? "" : "s"}`;
+  const rounds = room.mode === "questions" ? `${room.settings.questionRounds} round${room.settings.questionRounds === 1 ? "" : "s"}` : `${room.round} round${room.round === 1 ? "" : "s"}`;
   ctx.fillText(`${room.players.length} players  ·  ${rounds}`, center, 800);
 
   // Footer

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import type { ScreenProps } from "@/components/types";
-import { Banner, PlayerRow, Avatar } from "@/components/ui";
+import { Banner, PlayerRow, Avatar, ReportButton } from "@/components/ui";
 import { makeRecapImage, shareRecap } from "@/lib/share";
 
 export default function GameOver({ view, send }: ScreenProps) {
@@ -31,8 +31,11 @@ export default function GameOver({ view, send }: ScreenProps) {
       ? "🟢 Civilians win!"
       : w?.team === "guesser"
         ? "🎯 Correct guess — impostor wins!"
-        : "🔴 Impostors win!";
-  const tone = w?.team === "civilians" ? "good" : w?.team === "guesser" ? "warn" : "bad";
+        : w?.team === "jester"
+          ? `🃏 ${byId(w.playerIds[0])?.name ?? "The Jester"} wins — they got voted out!`
+          : "🔴 Impostors win!";
+  const tone =
+    w?.team === "civilians" ? "good" : w?.team === "guesser" || w?.team === "jester" ? "warn" : "bad";
 
   const won = w?.playerIds.includes(me.id);
   const isQuestions = room.mode === "questions";
@@ -86,7 +89,14 @@ export default function GameOver({ view, send }: ScreenProps) {
 
       <section className="flex-1 space-y-2 overflow-y-auto">
         {tab === "roles" &&
-          room.players.map((p) => <PlayerRow key={p.id} p={p} meId={me.id} />)}
+          room.players.map((p) => (
+            <PlayerRow
+              key={p.id}
+              p={p}
+              meId={me.id}
+              right={p.id !== me.id ? <ReportButton targetId={p.id} send={send} /> : undefined}
+            />
+          ))}
 
         {tab === "scores" &&
           ranked.map((r, i) => (
@@ -112,24 +122,35 @@ export default function GameOver({ view, send }: ScreenProps) {
                   ))}
                 </div>
               ))}
-            {isQuestions && room.answers && (
-              <div>
-                <p className="mb-1 text-xs uppercase tracking-wide text-muted">Answers</p>
-                {room.players.map((p) => (
-                  <div key={p.id} className="flex gap-2 text-sm">
-                    <span className="w-24 shrink-0 truncate text-muted">{p.name}</span>
-                    <span className="font-medium">{room.answers?.[p.id] ?? "—"}</span>
-                  </div>
-                ))}
-              </div>
-            )}
+            {isQuestions &&
+              (room.answerRounds ?? []).map((r, i) => (
+                <div key={i}>
+                  <p className="mb-1 text-xs uppercase tracking-wide text-muted">Round {i + 1} answers</p>
+                  {room.players.map((p) => (
+                    <div key={p.id} className="flex gap-2 text-sm">
+                      <span className="w-24 shrink-0 truncate text-muted">{p.name}</span>
+                      <span className="font-medium">{r[p.id] ?? "—"}</span>
+                    </div>
+                  ))}
+                </div>
+              ))}
             <div>
               <p className="mb-1 text-xs uppercase tracking-wide text-muted">Votes</p>
               {(room.voteLog ?? []).map((v, i) => (
-                <p key={i} className="text-sm">
-                  <span className="text-muted">Round {v.round}: </span>
-                  {v.eliminatedId ? `${byId(v.eliminatedId)?.name} voted out` : "No one voted out"}
-                </p>
+                <div key={i} className="mb-2">
+                  <p className="text-sm">
+                    <span className="text-muted">Round {v.round}: </span>
+                    {v.eliminatedId ? `${byId(v.eliminatedId)?.name} voted out` : "No one voted out"}
+                  </p>
+                  <p className="text-xs text-muted">
+                    {Object.entries(v.votes ?? {})
+                      .map(
+                        ([voter, t]) =>
+                          `${byId(voter)?.name ?? "?"} → ${t === "skip" ? "skip" : byId(t)?.name ?? "?"}`,
+                      )
+                      .join(" · ")}
+                  </p>
+                </div>
               ))}
             </div>
           </div>

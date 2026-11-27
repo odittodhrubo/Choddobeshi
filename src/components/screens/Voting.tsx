@@ -2,12 +2,12 @@
 
 import { useState } from "react";
 import type { ChatScreenProps } from "@/components/types";
-import { Timer } from "@/components/ui";
+import { Timer, DetectivePanel, useStyle } from "@/components/ui";
 import ChatBox from "@/components/ChatBox";
-import { playerColor } from "@/lib/colors";
 
-/** Suspect-file avatar: initials disc with a colored ring and a faint fingerprint. */
-function SuspectFace({ name, color }: { name: string; color: string }) {
+/** Suspect-file avatar: initials disc with a coloured ring and a faint fingerprint. */
+function SuspectFace({ name, id }: { name: string; id: string }) {
+  const { color } = useStyle(id);
   return (
     <span className="relative grid h-16 w-16 place-items-center">
       <svg viewBox="0 0 24 24" className="absolute inset-0 h-full w-full opacity-20" fill="none"
@@ -28,13 +28,16 @@ export default function Voting({ view, send, chat }: ChatScreenProps) {
   const { me, room } = view;
   const alive = room.players.filter((p) => p.alive);
   const votedCount = room.players.filter((p) => p.hasVoted).length;
-  const [pick, setPick] = useState<string | null>(null);
-  const [locked, setLocked] = useState(false);
+
+  // The server tells me my own saved vote, so this survives a refresh.
+  const [localPick, setLocalPick] = useState<string | null>(null);
+  const pick = localPick ?? me.myVote ?? null;
+  const saved = !!pick && me.myVote === pick;
+  const everyoneVoted = votedCount === alive.length;
 
   function confirm() {
     if (!me.alive || !pick) return;
     send("vote:cast", { target: pick });
-    setLocked(true);
   }
 
   return (
@@ -50,6 +53,12 @@ export default function Voting({ view, send, chat }: ChatScreenProps) {
         <Timer endsAt={room.phaseEndsAt} />
       </div>
 
+      {everyoneVoted && (
+        <p className="text-center text-sm text-warn">Everyone has voted — last chance to change your mind.</p>
+      )}
+
+      <DetectivePanel view={view} send={send} />
+
       <section className="grid flex-1 grid-cols-2 gap-2.5 overflow-y-auto pb-1">
         {alive.map((p) => {
           const selected = pick === p.id;
@@ -57,7 +66,7 @@ export default function Voting({ view, send, chat }: ChatScreenProps) {
             <button
               key={p.id}
               disabled={!me.alive}
-              onClick={() => { setPick(p.id); setLocked(false); }}
+              onClick={() => setLocalPick(p.id)}
               className={`relative flex flex-col items-center gap-2 rounded-2xl border-2 p-3 transition
                 ${selected ? "border-bad bg-bad/10 scale-[1.02]" : "border-line bg-panel2/70 hover:border-brand/50"}
                 disabled:opacity-50`}
@@ -71,7 +80,7 @@ export default function Voting({ view, send, chat }: ChatScreenProps) {
                   Sus
                 </span>
               )}
-              <SuspectFace name={p.name} color={playerColor(p.id)} />
+              <SuspectFace name={p.name} id={p.id} />
               <span className="w-full truncate text-center text-sm font-semibold">
                 {p.name}
                 {p.id === me.id && <span className="ml-1 text-xs text-brand">(you)</span>}
@@ -82,7 +91,7 @@ export default function Voting({ view, send, chat }: ChatScreenProps) {
       </section>
 
       <button
-        onClick={() => { setPick("skip"); setLocked(false); }}
+        onClick={() => setLocalPick("skip")}
         disabled={!me.alive}
         className={`btn w-full border-2 ${pick === "skip" ? "border-warn bg-warn/20 text-warn" : "border-line bg-panel2 text-muted"}`}
       >
@@ -90,19 +99,20 @@ export default function Voting({ view, send, chat }: ChatScreenProps) {
       </button>
 
       {me.alive ? (
-        <button
-          className="btn-primary"
-          disabled={!pick}
-          onClick={confirm}
-        >
-          {locked
-            ? "✓ Vote locked — tap a card to change"
-            : pick === "skip"
-              ? "Confirm skip"
-              : pick
-                ? `Vote out ${room.players.find((p) => p.id === pick)?.name ?? ""}`
-                : "Pick someone to vote"}
-        </button>
+        <>
+          <button className="btn-primary" disabled={!pick || saved} onClick={confirm}>
+            {saved
+              ? "✓ Vote saved"
+              : pick === "skip"
+                ? "Confirm skip"
+                : pick
+                  ? `${me.myVote ? "Change vote to" : "Vote out"} ${room.players.find((p) => p.id === pick)?.name ?? ""}`
+                  : "Pick someone to vote"}
+          </button>
+          {saved && (
+            <p className="text-center text-xs text-muted">You can change your vote until the timer ends.</p>
+          )}
+        </>
       ) : (
         <p className="text-center text-sm text-muted">👻 Ghosts cannot vote.</p>
       )}

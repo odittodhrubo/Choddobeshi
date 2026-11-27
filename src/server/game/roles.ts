@@ -51,14 +51,31 @@ export function assignQuestionRoles(
   room.aliases = [];
 }
 
+/** Jester + Detective count for these settings (classic mode only). */
+export function specialCount(s: Settings): { j: number; det: number } {
+  return { j: s.jester ? 1 : 0, det: s.detective ? 1 : 0 };
+}
+
+/** Throws a user-facing message if the role mix is not playable. */
+export function validateRoleMix(n: number, s: Settings): void {
+  const { d, c } = resolveCounts(n, s);
+  const { j, det } = specialCount(s);
+  const impostors = d + c;
+  const civTeam = n - impostors - j; // civilians + detective
+  const pureCivilians = civTeam - det;
+  if (impostors < 1) throw new Error("Need at least 1 impostor");
+  if (pureCivilians < 1) throw new Error("Not enough players for these special roles");
+  if (impostors >= civTeam) throw new Error("Civilians must outnumber impostors");
+}
+
 export function assignRoles(
   room: Room,
   pair: { civilian: string; doppelganger: string; aliases: string[] },
 ): void {
   const n = room.players.length;
   const { d, c } = resolveCounts(n, room.settings);
-  if (d + c < 1) throw new Error("Need at least 1 impostor");
-  if (d + c >= n - (d + c)) throw new Error("Too many impostors for this player count");
+  const { j, det } = specialCount(room.settings);
+  validateRoleMix(n, room.settings);
 
   const shuffled = shuffle(room.players);
   shuffled.forEach((p: Player, i) => {
@@ -69,6 +86,12 @@ export function assignRoles(
     } else if (i < d + c) {
       p.role = "chameleon";
       p.word = null;
+    } else if (i < d + c + j) {
+      p.role = "jester"; // knows their role; plays with the civilian word to blend in
+      p.word = pair.civilian;
+    } else if (i < d + c + j + det) {
+      p.role = "detective";
+      p.word = pair.civilian;
     } else {
       p.role = "civilian";
       p.word = pair.civilian;

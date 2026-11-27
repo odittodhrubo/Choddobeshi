@@ -2,6 +2,8 @@
 // Every function returns null on any failure so the caller can fall back to
 // the built-in packs — a game must never break because the AI was unavailable.
 
+import { containsProfanity } from "./moderation";
+
 const MODELS = ["gemini-flash-lite-latest", "gemini-flash-latest", "gemini-3.5-flash-lite"];
 
 export const aiEnabled = (): boolean => !!process.env.GEMINI_API_KEY;
@@ -82,6 +84,7 @@ export async function generateWordPair(
     required: ["civilian", "doppelganger"],
   });
   if (!pair || !pair.civilian?.trim() || !pair.doppelganger?.trim()) return null;
+  if (containsProfanity(pair.civilian) || containsProfanity(pair.doppelganger)) return null;
   return { civilian: pair.civilian.trim(), doppelganger: pair.doppelganger.trim() };
 }
 
@@ -101,5 +104,6 @@ export async function generateQuestionPair(
     required: ["civilian", "imposter"],
   });
   if (!q || !q.civilian?.trim() || !q.imposter?.trim()) return null;
+  if (containsProfanity(q.civilian) || containsProfanity(q.imposter)) return null;
   return { civilian: q.civilian.trim(), imposter: q.imposter.trim() };
 }

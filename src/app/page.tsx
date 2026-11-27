@@ -16,7 +16,9 @@ import {
   signInWithGoogle,
   type Stats,
 } from "@/lib/supabase/auth";
-import { ACHIEVEMENTS } from "@/shared/types";
+import { ACHIEVEMENTS, FRAMES, AVATAR_COLORS, featuredPack, WORD_PACKS, levelFor } from "@/shared/types";
+import { getMyProfile, saveCosmetics } from "@/lib/supabase/auth";
+import { Avatar, PlayerStyles } from "@/components/ui";
 
 export default function Home() {
   const router = useRouter();
@@ -27,6 +29,10 @@ export default function Home() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [badges, setBadges] = useState<string[]>([]);
   const [guest, setGuest] = useState(true);
+  const [frame, setFrame] = useState<string>("none");
+  const [color, setColor] = useState<string | null>(null);
+  const [friendCode, setFriendCode] = useState<string | null>(null);
+  const [myId, setMyId] = useState("me");
 
   useEffect(() => {
     setNameState(getName());
@@ -47,6 +53,13 @@ export default function Home() {
       setGuest(await isGuest());
       setStats(await getMyStats());
       setBadges(await getMyAchievements());
+      const prof = await getMyProfile();
+      if (prof) {
+        setFrame(prof.frame ?? "none");
+        setColor(prof.color);
+        setFriendCode(prof.friend_code);
+      }
+      setMyId(getPlayerId());
     })();
   }, []);
 
@@ -102,6 +115,12 @@ export default function Home() {
         </p>
       </header>
 
+      <p className="text-center text-sm text-muted">
+        ⭐ Today&apos;s daily pack:{" "}
+        <b className="text-warn">{WORD_PACKS.find((w) => w.id === featuredPack())?.name}</b>
+        <span> — winners earn +1 point</span>
+      </p>
+
       <div className="card flex flex-col gap-4">
         <label className="flex flex-col gap-1.5">
           <span className="text-sm text-muted">Your name</span>
@@ -151,9 +170,15 @@ export default function Home() {
           {stats && stats.games > 0 ? (
             <>
               <div className="flex items-center justify-between rounded-xl border border-line bg-panel2/50 px-4 py-2.5">
-                <span className="font-display font-bold text-brand">Level {level(stats.points)}</span>
+                <span className="font-display font-bold text-brand">Level {levelFor(stats.points)}</span>
                 <span className="text-xs text-muted">{stats.points} XP</span>
               </div>
+              {stats.streak_days > 0 && (
+                <p className="text-center text-sm">
+                  🔥 <b>{stats.streak_days}-day streak</b>
+                  <span className="text-muted"> · best {stats.best_streak}</span>
+                </p>
+              )}
               <div className="grid grid-cols-3 gap-2 text-center">
                 <Stat label="Games" value={stats.games} />
                 <Stat label="Wins" value={stats.wins} />
@@ -182,6 +207,70 @@ export default function Home() {
             <p className="text-sm text-muted">Play a game to start tracking your stats.</p>
           )}
 
+          {stats && (
+            <div className="flex flex-col gap-2 rounded-xl border border-line bg-panel2/40 p-3">
+              <div className="flex items-center gap-3">
+                <PlayerStyles
+                  players={[
+                    { id: myId, name: name || "You", isHost: false, connected: true, alive: true, frame, color: color ?? undefined },
+                  ]}
+                >
+                  <Avatar name={name || "You"} seed={myId} size={44} />
+                </PlayerStyles>
+                <p className="text-sm text-muted">Customise your avatar. Unlock more by levelling up.</p>
+              </div>
+              <p className="text-xs uppercase tracking-wide text-muted">Frame</p>
+              <div className="flex flex-wrap gap-1.5">
+                {FRAMES.map((f) => {
+                  const locked = levelFor(stats.points) < f.minLevel;
+                  return (
+                    <button
+                      key={f.id}
+                      disabled={locked}
+                      onClick={() => {
+                        setFrame(f.id);
+                        void saveCosmetics(f.id, color);
+                      }}
+                      className={`min-h-0 rounded-lg border px-2.5 py-1 text-xs font-semibold ${
+                        frame === f.id ? "border-brand bg-brand/20" : "border-line bg-panel2"
+                      } ${locked ? "opacity-40" : ""}`}
+                      title={locked ? `Unlocks at level ${f.minLevel}` : f.label}
+                    >
+                      {f.label}
+                      {locked ? ` 🔒${f.minLevel}` : ""}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="text-xs uppercase tracking-wide text-muted">Colour</p>
+              <div className="flex flex-wrap gap-2">
+                {AVATAR_COLORS.map((c) => {
+                  const locked = levelFor(stats.points) < c.minLevel;
+                  return (
+                    <button
+                      key={c.id}
+                      disabled={locked}
+                      onClick={() => {
+                        setColor(c.id);
+                        void saveCosmetics(frame, c.id);
+                      }}
+                      aria-label={`Colour ${c.id}${locked ? ` (unlocks at level ${c.minLevel})` : ""}`}
+                      className={`h-7 w-7 rounded-full border-2 ${color === c.id ? "border-white" : "border-transparent"} ${locked ? "opacity-30" : ""}`}
+                      style={{ background: c.id }}
+                    />
+                  );
+                })}
+              </div>
+              <p className="text-xs text-muted">Cosmetics show to other players when you are signed in.</p>
+            </div>
+          )}
+
+          {friendCode && (
+            <p className="text-center text-sm text-muted">
+              Friend code: <b className="tracking-widest text-ink">{friendCode}</b>
+            </p>
+          )}
+
           {guest && (
             <button className="btn-ghost" onClick={() => void signInWithGoogle()}>
               Sign in with Google to save progress
@@ -199,14 +288,14 @@ export default function Home() {
             Leaderboard →
           </Link>
         )}
+        {supabaseEnabled && (
+          <Link href="/friends" className="text-brand hover:underline">
+            Friends →
+          </Link>
+        )}
       </div>
     </main>
   );
-}
-
-// Level curve: each level needs a bit more XP than the last.
-function level(points: number): number {
-  return Math.floor(0.5 + Math.sqrt(Math.max(0, points) / 10)) + 1;
 }
 
 function Stat({ label, value }: { label: string; value: number | string }) {

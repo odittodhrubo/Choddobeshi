@@ -20,6 +20,9 @@ export const settingsSchema = z
     voteSeconds: z.number().int().min(10).max(120),
     guessSeconds: z.number().int().min(10).max(120),
     maxRounds: z.number().int().min(6).max(20),
+    questionRounds: z.number().int().min(1).max(3),
+    jester: z.boolean(),
+    detective: z.boolean(),
     revealRoleOnEject: z.boolean(),
     doppelgangers: z.union([z.number().int().min(0).max(3), z.literal("auto")]),
     chameleons: z.union([z.number().int().min(0).max(3), z.literal("auto")]),
@@ -35,6 +38,7 @@ export const settingsSchema = z
     scoreCivilian: z.number().int().min(0).max(20),
     scoreImpostor: z.number().int().min(0).max(20),
     scoreGuesser: z.number().int().min(0).max(20),
+    scoreJester: z.number().int().min(0).max(20),
   })
   .partial();
 
@@ -45,3 +49,8 @@ export const guessSchema = z.object({ text: z.string().trim().min(1).max(40) });
 export const chatSchema = z.object({ text: z.string().trim().min(1).max(200) });
 export const kickSchema = z.object({ target: z.string().min(1).max(64) });
 export const reactSchema = z.object({ emoji: z.enum(["🤔", "😂", "🚩", "👀", "🔥", "❤️"]) });
+export const targetSchema = z.object({ target: z.string().min(1).max(64) });
+export const reportSchema = z.object({
+  target: z.string().min(1).max(64),
+  reason: z.enum(["abusive", "cheating", "spam", "other"]),
+});

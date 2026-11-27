@@ -1,5 +1,6 @@
 import type { Server } from "socket.io";
-import type { Player, Room, Winner } from "../../shared/types";
+import type { Player, Room, Winner, Peek } from "../../shared/types";
+import { teamOf, featuredPack } from "../../shared/types";
 import { assignRoles, assignQuestionRoles, makeTurnOrder } from "./roles";
 import { tallyVotes, checkWinner, countVotes } from "./votes";
 import { isCorrectGuess, normalize } from "./guess";
@@ -7,9 +8,10 @@ import { pickPair } from "../words";
 import { pickQuestion } from "../questions";
 import { generateWordPair, generateQuestionPair } from "../ai";
 import { broadcast } from "./view";
-import { recordResult } from "../supabase";
+import { recordResult, recordPair } from "../supabase";
 
-const REVEAL_SECONDS = 8;
+const REVEAL_SECONDS = 20; // upper bound; ends early once everyone is ready
+const VOTE_GRACE_SECONDS = 5; // after the last vote, time left to change your mind
 const RESULT_SECONDS = 6;
 
 function clearTimer(room: Room): void {
@@ -49,6 +51,7 @@ export async function startGame(io: Server, room: Room): Promise<string | null> 
   const questions = room.settings.mode === "questions";
   const custom = room.settings.wordPack === "custom";
   const ai = room.settings.wordPack === "ai";
+  let key: string | null = null;
   try {
     if (questions) {
       if (custom && room.settings.customQuestion) {
@@ -81,8 +84,9 @@ export async function startGame(io: Server, room: Room): Promise<string | null> 
         assignRoles(room, pair);
       }
     } else {
-      const { pair, index } = pickPair(room.settings.wordPack, room.usedPairs, room.settings.difficulty);
+      const { pair, index, key: k } = pickPair(room.settings.wordPack, room.usedPairs, room.settings.difficulty);
       room.usedPairs.push(index);
+      key = k;
       assignRoles(room, pair);
     }
   } catch (e) {
@@ -101,9 +105,32 @@ export async function startGame(io: Server, room: Room): Promise<string | null> 
   room.guesserId = null;
   room.emergencyUsedBy = [];
   room.voteLog = [];
+  room.answerHistory = [];
+  room.ready = [];
+  room.peeks = {};
+  room.reports = [];
+  room.pairKey = key;
 
-  const afterReveal = questions ? () => startAnswer(io, room) : () => startRound(io, room);
-  enter(io, room, "ROLE_REVEAL", REVEAL_SECONDS, afterReveal);
+  enter(io, room, "ROLE_REVEAL", REVEAL_SECONDS, () => afterReveal(io, room));
+  return null;
+}
+
+/** Leave the role reveal: into the first clue round or the first answer round. */
+function afterReveal(io: Server, room: Room): void {
+  if (room.phase !== "ROLE_REVEAL") return;
+  if (room.settings.mode === "questions") startAnswer(io, room);
+  else startRound(io, room);
+}
+
+/** A player is ready. When everyone still connected is ready, skip the wait. */
+export function setReady(io: Server, room: Room, playerId: string): string | null {
+  if (room.phase !== "ROLE_REVEAL") return "Not the role reveal";
+  if (!room.players.some((p) => p.id === playerId)) return "Not in this room";
+  if (!room.ready.includes(playerId)) room.ready.push(playerId);
+
+  const waiting = room.players.filter((p) => p.connected && !room.ready.includes(p.id));
+  if (waiting.length === 0) afterReveal(io, room);
+  else broadcast(io, room);
   return null;
 }
 
@@ -112,8 +139,22 @@ export async function startGame(io: Server, room: Room): Promise<string | null> 
 function startAnswer(io: Server, room: Room): void {
   room.round = 1;
   room.answers = {};
+  room.answerHistory = [];
   room.votes = {};
-  enter(io, room, "ANSWER", room.settings.clueSeconds, () => toDiscussion(io, room));
+  enter(io, room, "ANSWER", room.settings.clueSeconds, () => endAnswerRound(io, room));
+}
+
+/** Close the current answer round: archive it, then next round or discussion. */
+function endAnswerRound(io: Server, room: Room): void {
+  if (room.phase !== "ANSWER") return;
+  room.answerHistory.push({ ...room.answers });
+  if (room.round < room.settings.questionRounds) {
+    room.round += 1;
+    room.answers = {};
+    enter(io, room, "ANSWER", room.settings.clueSeconds, () => endAnswerRound(io, room));
+  } else {
+    toDiscussion(io, room);
+  }
 }
 
 export function submitAnswer(
@@ -125,13 +166,28 @@ export function submitAnswer(
   if (room.phase !== "ANSWER") return "Not the answer phase";
   const player = room.players.find((p) => p.id === playerId);
   if (!player || !player.alive) return "You cannot answer";
+  if (playerId in room.answers) return "You already answered this round";
+
+  const norm = normalize(text);
+  const used = [...room.answerHistory, room.answers].some((round) =>
+    Object.values(round).some((a) => normalize(a) === norm),
+  );
+  if (used) return "That answer was already used";
+
   room.answers[playerId] = text.trim();
 
   if (alivePlayers(room).every((p) => p.id in room.answers)) {
-    toDiscussion(io, room);
+    endAnswerRound(io, room);
   } else {
     broadcast(io, room);
   }
+  return null;
+}
+
+/** Host: stop waiting for slow or AFK players and close the round now. */
+export function skipAnswerWait(io: Server, room: Room): string | null {
+  if (room.phase !== "ANSWER") return "Not the answer phase";
+  endAnswerRound(io, room);
   return null;
 }
 
@@ -175,6 +231,13 @@ function onClueTimeout(io: Server, room: Room): void {
   }
   room.turnIndex += 1;
   beginClueTurn(io, room);
+}
+
+/** Host: skip the current speaker's turn (AFK player). */
+export function skipTurn(io: Server, room: Room): string | null {
+  if (room.phase !== "CLUES") return "Not the clue phase";
+  onClueTimeout(io, room);
+  return null;
 }
 
 export function validateClue(room: Room, player: Player, raw: string): string | null {
@@ -245,21 +308,28 @@ export function castVote(
   if (target !== "skip" && !room.players.some((p) => p.id === target && p.alive))
     return "Invalid vote target";
 
-  room.votes[voterId] = target as string | "skip";
+  room.votes[voterId] = target as string | "skip"; // a re-vote simply replaces it
 
-  // If every living player has voted, resolve immediately.
+  // Everyone has voted: don't resolve instantly (people may still change their
+  // mind). Shorten the wait to a short grace window instead.
   if (alivePlayers(room).every((p) => p.id in room.votes)) {
-    doTally(io, room);
-  } else {
-    broadcast(io, room);
+    const left = room.phaseEndsAt != null ? room.phaseEndsAt - Date.now() : Infinity;
+    if (left > VOTE_GRACE_SECONDS * 1000) {
+      clearTimer(room);
+      room.phaseEndsAt = Date.now() + VOTE_GRACE_SECONDS * 1000;
+      room.timer = setTimeout(() => doTally(io, room), VOTE_GRACE_SECONDS * 1000);
+    }
   }
+  broadcast(io, room);
   return null;
 }
 
 function doTally(io: Server, room: Room): void {
   const eliminatedId = tallyVotes(room);
   room.lastEliminated = eliminatedId;
-  room.voteLog.push({ round: room.round, tally: countVotes(room), eliminatedId });
+  const votes: Record<string, string> = {};
+  for (const p of alivePlayers(room)) votes[p.id] = room.votes[p.id] ?? "skip";
+  room.voteLog.push({ round: room.round, tally: countVotes(room), votes, eliminatedId });
   if (eliminatedId) {
     const p = room.players.find((x) => x.id === eliminatedId);
     if (p) p.alive = false;
@@ -288,8 +358,8 @@ function resolveAfterVote(io: Server, room: Room): void {
   // Questions mode: single vote decides it. Imposter caught -> civilians win.
   if (room.settings.mode === "questions") {
     const caught = elim?.role === "imposter";
-    const impostorIds = room.players.filter((p) => p.role === "imposter").map((p) => p.id);
-    const civilianIds = room.players.filter((p) => p.role === "civilian").map((p) => p.id);
+    const impostorIds = room.players.filter((p) => teamOf(p.role) === "impostors").map((p) => p.id);
+    const civilianIds = room.players.filter((p) => teamOf(p.role) === "civilians").map((p) => p.id);
     endGame(
       io,
       room,
@@ -300,7 +370,14 @@ function resolveAfterVote(io: Server, room: Room): void {
     return;
   }
 
-  if (elim && elim.role !== "civilian") {
+  // The Jester wins alone the moment they are voted out.
+  if (elim && elim.role === "jester") {
+    endGame(io, room, { team: "jester", playerIds: [elim.id] });
+    return;
+  }
+
+  // Only a caught impostor gets a last guess.
+  if (elim && teamOf(elim.role) === "impostors") {
     startLastGuess(io, room, elim);
     return;
   }
@@ -353,12 +430,18 @@ function wrongGuess(io: Server, room: Room): void {
 /** Points each player earns this game, by player id. */
 function pointsThisGame(room: Room, winner: Winner): Record<string, number> {
   const pts: Record<string, number> = {};
-  if (winner.team === "guesser") {
-    winner.playerIds.forEach((id) => (pts[id] = room.settings.scoreGuesser));
-  } else if (winner.team === "civilians") {
-    room.players.filter((p) => p.role === "civilian").forEach((p) => (pts[p.id] = room.settings.scoreCivilian));
-  } else {
-    room.players.filter((p) => p.role !== "civilian").forEach((p) => (pts[p.id] = room.settings.scoreImpostor));
+  const set = (ids: string[], n: number) => ids.forEach((id) => (pts[id] = n));
+  const byTeam = (t: "civilians" | "impostors") =>
+    room.players.filter((p) => teamOf(p.role) === t).map((p) => p.id);
+
+  if (winner.team === "guesser") set(winner.playerIds, room.settings.scoreGuesser);
+  else if (winner.team === "jester") set(winner.playerIds, room.settings.scoreJester);
+  else if (winner.team === "civilians") set(byTeam("civilians"), room.settings.scoreCivilian);
+  else set(byTeam("impostors"), room.settings.scoreImpostor);
+
+  // Daily featured pack: every winner earns +1.
+  if (room.settings.wordPack === featuredPack()) {
+    for (const id of winner.playerIds) pts[id] = (pts[id] ?? 0) + 1;
   }
   return pts;
 }
@@ -367,13 +450,18 @@ function pointsThisGame(room: Room, winner: Winner): Record<string, number> {
 function persistResults(room: Room, winner: Winner, pts: Record<string, number>): void {
   for (const p of room.players) {
     if (!p.userId || !p.role) continue;
+    const team = teamOf(p.role);
     void recordResult({
       userId: p.userId,
-      role: p.role === "civilian" ? "civilian" : "impostor",
+      role: team === "civilians" ? "civilian" : team === "neutral" ? "jester" : "impostor",
       won: winner.playerIds.includes(p.id),
       winTeam: winner.team,
       points: pts[p.id] ?? 0,
     });
+  }
+  // Balance data: did the impostor side win this preset pair?
+  if (room.pairKey) {
+    void recordPair(room.pairKey, winner.team === "impostors" || winner.team === "guesser");
   }
 }
 
@@ -385,6 +473,30 @@ function endGame(io: Server, room: Room, winner: Winner): void {
   for (const [id, n] of Object.entries(pts)) room.scores[id] = (room.scores[id] ?? 0) + n;
   persistResults(room, winner, pts);
   enter(io, room, "GAME_OVER", null);
+}
+
+/** Detective: once per game, learn whether another player shares your word. */
+export function detectivePeek(
+  io: Server,
+  room: Room,
+  playerId: string,
+  targetId: string,
+): { error?: string; peek?: Peek } {
+  const me = room.players.find((p) => p.id === playerId);
+  if (!me || me.role !== "detective") return { error: "Only the Detective can peek" };
+  if (!me.alive) return { error: "You are out of the game" };
+  if (!["CLUES", "DISCUSSION", "VOTING"].includes(room.phase)) return { error: "You cannot peek now" };
+  if (room.peeks[playerId]) return { error: "You already used your peek" };
+  const target = room.players.find((p) => p.id === targetId);
+  if (!target || target.id === playerId) return { error: "Pick another player" };
+
+  // Same word: civilians, the jester and fellow detective hold the civilian word.
+  // Doppelganger holds a different word; the chameleon holds none.
+  const same = target.word != null && me.word != null && target.word === me.word;
+  const peek: Peek = { target: target.id, same };
+  room.peeks[playerId] = peek;
+  broadcast(io, room);
+  return { peek };
 }
 
 export function playAgain(io: Server, room: Room): string | null {
@@ -411,7 +523,12 @@ export function playAgain(io: Server, room: Room): string | null {
   room.aliases = [];
   room.emergencyUsedBy = [];
   room.voteLog = [];
-  // scores and gamesPlayed persist across the session.
+  room.answerHistory = [];
+  room.ready = [];
+  room.peeks = {};
+  room.reports = [];
+  room.pairKey = null;
+  // scores, mutes and bans persist across the session.
   broadcast(io, room);
   return null;
 }
@@ -426,13 +543,13 @@ export function resume(io: Server, room: Room): void {
   };
   switch (room.phase) {
     case "ROLE_REVEAL":
-      sched(() => (room.settings.mode === "questions" ? startAnswer(io, room) : startRound(io, room)));
+      sched(() => afterReveal(io, room));
       break;
     case "CLUES":
       sched(() => onClueTimeout(io, room));
       break;
     case "ANSWER":
-      sched(() => toDiscussion(io, room));
+      sched(() => endAnswerRound(io, room));
       break;
     case "DISCUSSION":
       sched(() => startVoting(io, room));

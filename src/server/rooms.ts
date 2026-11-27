@@ -12,11 +12,14 @@ import {
   chatSchema,
   kickSchema,
   reactSchema,
+  targetSchema,
+  reportSchema,
 } from "../shared/schemas";
 import { broadcast, viewFor } from "./game/view";
 import { containsProfanity, makeRateLimiter } from "./moderation";
 import { loadAllRooms, deleteRoom } from "./persistence";
 import { resume } from "./game/engine";
+import { loadCosmetics, recordReport } from "./supabase";
 import {
   startGame,
   submitClue,
@@ -26,6 +29,10 @@ import {
   submitGuess,
   acceptGuess,
   callMeeting,
+  setReady,
+  skipTurn,
+  skipAnswerWait,
+  detectivePeek,
   playAgain,
   clearTimer,
 } from "./game/engine";
@@ -68,6 +75,13 @@ function newRoom(code: string): Room {
     emergencyUsedBy: [],
     voteLog: [],
     aiRecent: [],
+    answerHistory: [],
+    ready: [],
+    muted: [],
+    bans: [],
+    peeks: {},
+    pairKey: null,
+    reports: [],
   };
 }
 
@@ -105,12 +119,33 @@ export async function restoreRooms(io: Server): Promise<void> {
   if (saved.length) console.log(`> Restored ${saved.length} room(s) from the database`);
 }
 
+/** Load a signed-in player's unlocked frame/colour and show it to the room. */
+function applyCosmetics(io: Server, room: Room, player: Player): void {
+  if (!player.userId) return;
+  void loadCosmetics(player.userId).then((c) => {
+    if (c.frame === player.frame && c.color === player.color) return;
+    player.frame = c.frame;
+    player.color = c.color;
+    broadcast(io, room);
+  });
+}
+
 /** Backfill a player's auth user id once token verification completes. */
-export function attachUser(socket: Socket, userId: string): void {
+export function attachUser(io: Server, socket: Socket, userId: string): void {
   const d = socket.data as SocketData;
   const room = d.code ? rooms.get(d.code) : undefined;
   const player = room?.players.find((p) => p.id === d.playerId);
-  if (player) player.userId = userId;
+  if (!room || !player) return;
+  player.userId = userId;
+
+  // A banned account can't sneak in just because its token verified late.
+  if (room.bans.includes(userId)) {
+    socket.emit("kicked");
+    room.players = room.players.filter((p) => p.id !== player.id);
+    broadcast(io, room);
+    return;
+  }
+  applyCosmetics(io, room, player);
 }
 
 export function registerHandlers(io: Server, socket: Socket): void {
@@ -129,6 +164,10 @@ export function registerHandlers(io: Server, socket: Socket): void {
       handler(...args);
     });
   }) as typeof socket.on;
+
+  // Chat and reactions get their own, stricter budgets on top of the global one.
+  const chatAllow = makeRateLimiter(5, 10_000);
+  const reactAllow = makeRateLimiter(10, 5_000);
 
   socket.on("room:create", (payload) => {
     const parsed = createSchema.safeParse(payload);
@@ -155,6 +194,7 @@ export function registerHandlers(io: Server, socket: Socket): void {
     socket.join(code);
     socket.emit("room:created", { code });
     socket.emit("state", viewFor(room, playerId));
+    applyCosmetics(io, room, player);
   });
 
   socket.on("room:join", (payload) => {
@@ -166,6 +206,8 @@ export function registerHandlers(io: Server, socket: Socket): void {
 
     const room = rooms.get(code);
     if (!room) return err("Room not found");
+    if (room.bans.includes(playerId) || (data.userId && room.bans.includes(data.userId)))
+      return err("You were removed from this room");
 
     let player = room.players.find((p) => p.id === playerId);
     if (player) {
@@ -194,6 +236,7 @@ export function registerHandlers(io: Server, socket: Socket): void {
     socket.join(code);
     reassignHostIfNeeded(room);
     broadcast(io, room);
+    applyCosmetics(io, room, player);
   });
 
   function withRoom(
@@ -307,6 +350,8 @@ export function registerHandlers(io: Server, socket: Socket): void {
     withRoom(false, (room, player) => {
       const parsed = reactSchema.safeParse(payload);
       if (!parsed.success) return "Invalid reaction";
+      if (room.muted.includes(player.id)) return "The host has muted you";
+      if (!reactAllow()) return "Too many reactions";
       io.to(room.code).emit("reaction", { from: player.name, emoji: parsed.data.emoji });
     }),
   );
@@ -315,6 +360,8 @@ export function registerHandlers(io: Server, socket: Socket): void {
     withRoom(false, (room, player) => {
       const parsed = chatSchema.safeParse(payload);
       if (!parsed.success) return "Message too long";
+      if (room.muted.includes(player.id)) return "The host has muted you";
+      if (!chatAllow()) return "You are sending messages too fast";
       if (containsProfanity(parsed.data.text)) return "Keep chat clean";
       const ghost = !player.alive && room.phase !== "GAME_OVER";
       const msg: ChatMsg = { from: player.name, text: parsed.data.text, ghost };
@@ -324,6 +371,70 @@ export function registerHandlers(io: Server, socket: Socket): void {
         if (ghost && p.alive && room.phase !== "GAME_OVER") continue;
         io.to(p.socketId).emit("chat", msg);
       }
+    }),
+  );
+
+  // ---- Pacing -----------------------------------------------------------
+  socket.on("ready:set", () => withRoom(false, (room, player) => setReady(io, room, player.id)));
+  socket.on("turn:skip", () => withRoom(true, (room) => skipTurn(io, room)));
+  socket.on("answer:skip", () => withRoom(true, (room) => skipAnswerWait(io, room)));
+
+  // ---- Detective --------------------------------------------------------
+  socket.on("detective:peek", (payload) =>
+    withRoom(false, (room, player) => {
+      const parsed = targetSchema.safeParse(payload);
+      if (!parsed.success) return "Invalid target";
+      return detectivePeek(io, room, player.id, parsed.data.target).error ?? null;
+    }),
+  );
+
+  // ---- Host moderation --------------------------------------------------
+  socket.on("player:mute", (payload) =>
+    withRoom(true, (room, host) => {
+      const parsed = targetSchema.safeParse(payload);
+      if (!parsed.success) return "Invalid target";
+      const t = room.players.find((p) => p.id === parsed.data.target);
+      if (!t || t.id === host.id) return "Pick another player";
+      room.muted = room.muted.includes(t.id) ? room.muted.filter((x) => x !== t.id) : [...room.muted, t.id];
+      broadcast(io, room);
+    }),
+  );
+
+  socket.on("player:ban", (payload) =>
+    withRoom(true, (room, host) => {
+      if (room.phase !== "LOBBY") return "Can only remove players in the lobby";
+      const parsed = targetSchema.safeParse(payload);
+      if (!parsed.success) return "Invalid target";
+      const t = room.players.find((p) => p.id === parsed.data.target);
+      if (!t || t.id === host.id) return "Pick another player";
+      room.bans.push(t.id);
+      if (t.userId) room.bans.push(t.userId);
+      if (t.socketId) io.to(t.socketId).emit("kicked");
+      room.players = room.players.filter((p) => p.id !== t.id);
+      reassignHostIfNeeded(room);
+      broadcast(io, room);
+    }),
+  );
+
+  // ---- Reports ----------------------------------------------------------
+  socket.on("player:report", (payload) =>
+    withRoom(false, (room, player) => {
+      const parsed = reportSchema.safeParse(payload);
+      if (!parsed.success) return "Invalid report";
+      const t = room.players.find((p) => p.id === parsed.data.target);
+      if (!t || t.id === player.id) return "Pick another player";
+      const key = `${player.id}:${t.id}`;
+      if (room.reports.includes(key)) return "You already reported this player";
+      room.reports.push(key);
+      void recordReport({
+        roomCode: room.code,
+        reporterId: player.userId ?? null,
+        reporterName: player.name,
+        targetId: t.userId ?? null,
+        targetName: t.name,
+        reason: parsed.data.reason,
+      });
+      socket.emit("notice", { message: "Report sent. Thank you." });
     }),
   );
 

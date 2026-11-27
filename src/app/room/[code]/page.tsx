@@ -15,6 +15,7 @@ import Voting from "@/components/screens/Voting";
 import Ejection from "@/components/screens/Ejection";
 import LastGuess from "@/components/screens/LastGuess";
 import GameOver from "@/components/screens/GameOver";
+import { PlayerStyles } from "@/components/ui";
 
 export type Send = (event: string, payload?: unknown) => void;
 
@@ -52,6 +53,7 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
       toastTimer.current = setTimeout(() => setToast(""), 2500);
     };
     const onChat = (m: ChatMsg) => setChat((c) => [...c.slice(-50), m]);
+    const onNotice = (e: { message: string }) => onError(e); // friendly one-off messages
     const onReaction = (r: { from: string; emoji: string }) => {
       const id = ++reactId.current;
       setReactions((list) => [...list, { id, from: r.from, emoji: r.emoji, left: 10 + Math.random() * 80 }]);
@@ -75,6 +77,7 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
     socket.on("state", onState);
     socket.on("error", onError);
     socket.on("chat", onChat);
+    socket.on("notice", onNotice);
     socket.on("reaction", onReaction);
     socket.on("kicked", onKicked);
     socket.on("closed", onClosed);
@@ -94,6 +97,7 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
       socket.off("state", onState);
       socket.off("error", onError);
       socket.off("chat", onChat);
+      socket.off("notice", onNotice);
       socket.off("reaction", onReaction);
       socket.off("kicked", onKicked);
       socket.off("closed", onClosed);
@@ -132,6 +136,7 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
   const common = { view, send };
 
   return (
+    <PlayerStyles players={view.room.players}>
     <div className="flex flex-1 flex-col">
       {phase === "LOBBY" && <Lobby {...common} />}
       {phase === "ROLE_REVEAL" && <RoleReveal {...common} />}
@@ -172,5 +177,6 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
         </div>
       )}
     </div>
+    </PlayerStyles>
   );
 }

@@ -2,7 +2,8 @@ import { createServer } from "node:http";
 import next from "next";
 import { Server } from "socket.io";
 import { registerHandlers, attachUser, restoreRooms } from "./src/server/rooms";
-import { verifyToken } from "./src/server/supabase";
+import { verifyToken, loadExcludedPairs } from "./src/server/supabase";
+import { setExcludedPairs } from "./src/server/words";
 
 const dev = process.env.NODE_ENV !== "production";
 const port = Number(process.env.PORT ?? 3000);
@@ -28,11 +29,16 @@ app.prepare().then(() => {
     const token = socket.handshake.auth?.token as string | undefined;
     void verifyToken(token).then((uid) => {
       socket.data.userId = uid;
-      if (uid) attachUser(socket, uid);
+      if (uid) attachUser(io, socket, uid);
     });
   });
 
   void restoreRooms(io); // reload any games that were live before a restart
+
+  // Keep lopsided word pairs out of rotation, using logged balance data.
+  const refreshBalance = () => void loadExcludedPairs().then(setExcludedPairs);
+  refreshBalance();
+  setInterval(refreshBalance, 10 * 60 * 1000).unref();
 
   httpServer.listen(port, hostname, () => {
     console.log(`> Choddobeshi ready on http://${hostname}:${port} (dev=${dev})`);

@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import QRCode from "qrcode";
 import type { ScreenProps } from "@/components/types";
-import { WORD_PACKS } from "@/shared/types";
-import { PlayerRow, Avatar } from "@/components/ui";
+import { WORD_PACKS, featuredPack } from "@/shared/types";
+import { PlayerRow, Avatar, ReportButton } from "@/components/ui";
 
 export default function Lobby({ view, send }: ScreenProps) {
   const { me, room } = view;
@@ -22,7 +22,12 @@ export default function Lobby({ view, send }: ScreenProps) {
   }, [room.code]);
   const isQuestions = room.settings.mode === "questions";
   const { d, c } = resolveCounts(n, room.settings);
-  const rolesOk = isQuestions || (d + c >= 1 && d + c < n - (d + c));
+  const j = room.settings.jester ? 1 : 0;
+  const det = room.settings.detective ? 1 : 0;
+  const civTeam = n - d - c - j; // civilians + detective
+  const rolesOk =
+    isQuestions || (d + c >= 1 && civTeam - det >= 1 && d + c < civTeam);
+  const daily = featuredPack();
   const isCustom = room.settings.wordPack === "custom";
   const customReady =
     !isCustom ||
@@ -52,7 +57,9 @@ export default function Lobby({ view, send }: ScreenProps) {
       | "maxRounds"
       | "scoreCivilian"
       | "scoreImpostor"
-      | "scoreGuesser",
+      | "scoreGuesser"
+      | "scoreJester"
+      | "questionRounds",
     v: number,
   ) {
     send("room:settings", { [key]: v });
@@ -102,15 +109,32 @@ export default function Lobby({ view, send }: ScreenProps) {
             p={p}
             meId={me.id}
             right={
-              me.isHost && p.id !== me.id ? (
-                <button
-                  onClick={() => send("player:kick", { target: p.id })}
-                  aria-label={`Remove ${p.name}`}
-                  className="rounded-lg px-2 py-1 text-sm text-bad hover:bg-bad/15"
-                >
-                  Kick
-                </button>
-              ) : undefined
+              p.id === me.id ? undefined : (
+                <span className="flex items-center gap-1">
+                  {me.isHost && (
+                    <>
+                      <button
+                        onClick={() => send("player:kick", { target: p.id })}
+                        aria-label={`Remove ${p.name}`}
+                        className="rounded-lg px-2 py-1 text-sm text-bad hover:bg-bad/15"
+                      >
+                        Kick
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (confirm(`Ban ${p.name}? They cannot rejoin this room.`))
+                            send("player:ban", { target: p.id });
+                        }}
+                        aria-label={`Ban ${p.name}`}
+                        className="rounded-lg px-2 py-1 text-sm text-bad hover:bg-bad/15"
+                      >
+                        Ban
+                      </button>
+                    </>
+                  )}
+                  <ReportButton targetId={p.id} send={send} />
+                </span>
+              )
             }
           />
         ))}
@@ -206,9 +230,13 @@ export default function Lobby({ view, send }: ScreenProps) {
                 }`}
               >
                 {wp.name}
+                {wp.id === daily && <span title="Daily pack: winners earn +1 point"> ⭐</span>}
               </button>
             ))}
           </div>
+          <p className="text-xs text-muted">
+            ⭐ Today&apos;s daily pack: winners earn +1 bonus point.
+          </p>
 
           {room.settings.wordPack === "custom" ? (
             <CustomWordForm view={view} send={send} />
@@ -245,6 +273,10 @@ export default function Lobby({ view, send }: ScreenProps) {
             onChange={(v) => setNum("discussionSeconds", v)} />
           <Setting label="Vote timer" value={room.settings.voteSeconds} opts={[30, 45, 60, 80]} min={10} max={120} unit="s"
             onChange={(v) => setNum("voteSeconds", v)} />
+          {isQuestions && (
+            <Setting label="Answer rounds" value={room.settings.questionRounds} opts={[1, 2, 3]} unit=""
+              onChange={(v) => setNum("questionRounds", v)} />
+          )}
           {!isQuestions && (
             <Setting label="Last guess" value={room.settings.guessSeconds} opts={[30, 45, 60, 80]} min={10} max={120} unit="s"
               onChange={(v) => setNum("guessSeconds", v)} />
@@ -267,11 +299,15 @@ export default function Lobby({ view, send }: ScreenProps) {
             <Setting label="Correct last guess" value={room.settings.scoreGuesser} opts={[2, 3, 4, 5]} min={0} max={20} unit=" pt"
               onChange={(v) => setNum("scoreGuesser", v)} />
           )}
+          {!isQuestions && room.settings.jester && (
+            <Setting label="Jester win" value={room.settings.scoreJester} opts={[2, 3, 4, 5]} min={0} max={20} unit=" pt"
+              onChange={(v) => setNum("scoreJester", v)} />
+          )}
         </section>
       )}
 
       {me.isHost && !isQuestions && (
-        <RoleCounts n={n} d={d} c={c} auto={room.settings.doppelgangers === "auto"} ok={rolesOk}
+        <RoleCounts n={n} d={d} c={c} j={j} det={det} auto={room.settings.doppelgangers === "auto"} ok={rolesOk}
           onChange={(patch) => send("room:settings", patch)} />
       )}
 
@@ -367,6 +403,8 @@ function RoleCounts({
   n,
   d,
   c,
+  j,
+  det,
   auto,
   ok,
   onChange,
@@ -374,14 +412,23 @@ function RoleCounts({
   n: number;
   d: number;
   c: number;
+  j: number;
+  det: number;
   auto: boolean;
   ok: boolean;
-  onChange: (patch: { doppelgangers: number | "auto"; chameleons: number | "auto" }) => void;
+  onChange: (patch: {
+    doppelgangers?: number | "auto";
+    chameleons?: number | "auto";
+    jester?: boolean;
+    detective?: boolean;
+  }) => void;
 }) {
-  const civ = n - d - c;
+  const civ = Math.max(0, n - d - c - j - det);
   const set = (nd: number, nc: number) => onChange({ doppelgangers: nd, chameleons: nc });
   const tab = (on: boolean) =>
     `min-h-0 rounded-lg px-3 py-1.5 text-sm font-medium transition ${on ? "bg-brand text-white" : "bg-panel2 text-muted hover:text-ink"}`;
+  const toggle = (on: boolean) =>
+    `min-h-0 rounded-lg px-3 py-1.5 text-sm font-semibold transition ${on ? "bg-brand text-white" : "bg-panel2 text-muted hover:text-ink"}`;
 
   return (
     <section className="card flex flex-col gap-3">
@@ -397,10 +444,24 @@ function RoleCounts({
         onChange={auto ? undefined : (v) => set(v, c)} />
       <Stepper label="Chameleons" value={c} tone="text-warn" max={3}
         onChange={auto ? undefined : (v) => set(d, v)} />
+
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-sm text-warn">🃏 Jester <span className="text-muted">(wins if voted out)</span></span>
+        <button className={toggle(j === 1)} onClick={() => onChange({ jester: j === 0 })}>
+          {j === 1 ? "On" : "Off"}
+        </button>
+      </div>
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-sm text-brand">🔍 Detective <span className="text-muted">(one peek)</span></span>
+        <button className={toggle(det === 1)} onClick={() => onChange({ detective: det === 0 })}>
+          {det === 1 ? "On" : "Off"}
+        </button>
+      </div>
+
       <p className={`text-xs ${ok ? "text-muted" : "text-bad"}`}>
         {ok
-          ? "Civilians = players minus impostors. Need at least 1 impostor, and civilians must outnumber impostors."
-          : "Need at least 1 impostor, and civilians must outnumber impostors."}
+          ? "Civilians = players minus impostors and special roles. Civilians must outnumber impostors."
+          : "Need at least 1 impostor, at least 1 plain civilian, and civilians must outnumber impostors."}
       </p>
     </section>
   );

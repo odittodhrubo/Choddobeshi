@@ -4,13 +4,17 @@ import { useState } from "react";
 import type { ScreenProps } from "@/components/types";
 import { Timer } from "@/components/ui";
 
-export default function RoleReveal({ view }: ScreenProps) {
+export default function RoleReveal({ view, send }: ScreenProps) {
   const { me, room } = view;
   const [peeking, setPeeking] = useState(false);
   const isQuestions = room.mode === "questions";
 
+  const connected = room.players.filter((p) => p.connected);
+  const readyCount = connected.filter((p) => p.ready).length;
+  const iAmReady = !!room.players.find((p) => p.id === me.id)?.ready;
+
   return (
-    <main className="flex flex-1 flex-col items-center justify-center gap-6 text-center">
+    <main className="flex flex-1 flex-col items-center justify-center gap-5 text-center">
       <p className="text-muted">Your secret card</p>
 
       <button
@@ -35,6 +39,12 @@ export default function RoleReveal({ view }: ScreenProps) {
             </>
           ) : (
             <>
+              {me.specialRole === "jester" && (
+                <span className="text-sm font-semibold text-warn">🃏 You are the Jester — get voted out!</span>
+              )}
+              {me.specialRole === "detective" && (
+                <span className="text-sm font-semibold text-brand">🔍 You are the Detective</span>
+              )}
               <span className="text-sm text-muted">Your word is</span>
               <span className="font-display text-4xl font-bold text-brand">{me.word}</span>
             </>
@@ -48,7 +58,13 @@ export default function RoleReveal({ view }: ScreenProps) {
         )}
       </button>
 
-      <Timer endsAt={room.phaseEndsAt} label="Game starts in" />
+      <button className="btn-primary w-full" disabled={iAmReady} onClick={() => send("ready:set")}>
+        {iAmReady ? "✓ Ready — waiting for others" : "I'm ready"}
+      </button>
+      <p className="text-sm text-muted">
+        {readyCount}/{connected.length} ready · starts when everyone is ready
+      </p>
+      <Timer endsAt={room.phaseEndsAt} label="Auto-start in" />
     </main>
   );
 }
