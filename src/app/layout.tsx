@@ -19,6 +19,9 @@ export const metadata: Metadata = {
   title: "Choddobeshi — social deduction word game",
   description:
     "Civilians, a Doppelganger and a Chameleon. Give clues, vote, and catch the impostors. Play online with friends.",
+  manifest: "/manifest.webmanifest",
+  icons: { icon: "/icon.svg", apple: "/icon.svg" },
+  appleWebApp: { capable: true, title: "Choddobeshi", statusBarStyle: "black-translucent" },
 };
 
 export const viewport: Viewport = {

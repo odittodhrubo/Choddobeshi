@@ -5,7 +5,9 @@ import { tallyVotes, checkWinner, countVotes } from "./votes";
 import { isCorrectGuess, normalize } from "./guess";
 import { pickPair } from "../words";
 import { pickQuestion } from "../questions";
+import { generateWordPair, generateQuestionPair } from "../ai";
 import { broadcast } from "./view";
+import { recordResult } from "../supabase";
 
 const REVEAL_SECONDS = 8;
 const RESULT_SECONDS = 6;
@@ -40,16 +42,27 @@ function alivePlayers(room: Room): Player[] {
 
 // ---- Game start ----------------------------------------------------------
 
-export function startGame(io: Server, room: Room): string | null {
+export async function startGame(io: Server, room: Room): Promise<string | null> {
   if (room.phase !== "LOBBY") return "Game already started";
   if (room.players.length < 4) return "Need at least 4 players";
 
   const questions = room.settings.mode === "questions";
   const custom = room.settings.wordPack === "custom";
+  const ai = room.settings.wordPack === "ai";
   try {
     if (questions) {
       if (custom && room.settings.customQuestion) {
         assignQuestionRoles(room, room.settings.customQuestion);
+      } else if (ai) {
+        const q = await generateQuestionPair(room.aiRecent);
+        if (q) {
+          room.aiRecent.push(q.civilian);
+          assignQuestionRoles(room, q);
+        } else {
+          const { pair, index } = pickQuestion(room.usedPairs);
+          room.usedPairs.push(index);
+          assignQuestionRoles(room, pair);
+        }
       } else {
         const { pair, index } = pickQuestion(room.usedPairs);
         room.usedPairs.push(index);
@@ -57,6 +70,16 @@ export function startGame(io: Server, room: Room): string | null {
       }
     } else if (custom && room.settings.customWord) {
       assignRoles(room, { ...room.settings.customWord, aliases: [] });
+    } else if (ai) {
+      const p = await generateWordPair(room.settings.difficulty, room.aiRecent);
+      if (p) {
+        room.aiRecent.push(p.civilian);
+        assignRoles(room, { ...p, aliases: [] });
+      } else {
+        const { pair, index } = pickPair("en-general", room.usedPairs, room.settings.difficulty);
+        room.usedPairs.push(index);
+        assignRoles(room, pair);
+      }
     } else {
       const { pair, index } = pickPair(room.settings.wordPack, room.usedPairs, room.settings.difficulty);
       room.usedPairs.push(index);
@@ -65,6 +88,9 @@ export function startGame(io: Server, room: Room): string | null {
   } catch (e) {
     return (e as Error).message;
   }
+
+  // A late second start (during the AI await) is a no-op.
+  if (room.phase !== "LOBBY") return null;
 
   room.round = 0;
   room.clues = [];
@@ -324,16 +350,30 @@ function wrongGuess(io: Server, room: Room): void {
 
 // ---- Game over / replay --------------------------------------------------
 
-function awardScores(room: Room, winner: Winner): void {
-  const add = (id: string, pts: number) => {
-    room.scores[id] = (room.scores[id] ?? 0) + pts;
-  };
+/** Points each player earns this game, by player id. */
+function pointsThisGame(room: Room, winner: Winner): Record<string, number> {
+  const pts: Record<string, number> = {};
   if (winner.team === "guesser") {
-    winner.playerIds.forEach((id) => add(id, room.settings.scoreGuesser)); // caught impostor who guessed right
+    winner.playerIds.forEach((id) => (pts[id] = room.settings.scoreGuesser));
   } else if (winner.team === "civilians") {
-    room.players.filter((p) => p.role === "civilian").forEach((p) => add(p.id, room.settings.scoreCivilian));
+    room.players.filter((p) => p.role === "civilian").forEach((p) => (pts[p.id] = room.settings.scoreCivilian));
   } else {
-    room.players.filter((p) => p.role !== "civilian").forEach((p) => add(p.id, room.settings.scoreImpostor));
+    room.players.filter((p) => p.role !== "civilian").forEach((p) => (pts[p.id] = room.settings.scoreImpostor));
+  }
+  return pts;
+}
+
+/** Best-effort: persist each signed-in player's result to Supabase. */
+function persistResults(room: Room, winner: Winner, pts: Record<string, number>): void {
+  for (const p of room.players) {
+    if (!p.userId || !p.role) continue;
+    void recordResult({
+      userId: p.userId,
+      role: p.role === "civilian" ? "civilian" : "impostor",
+      won: winner.playerIds.includes(p.id),
+      winTeam: winner.team,
+      points: pts[p.id] ?? 0,
+    });
   }
 }
 
@@ -341,7 +381,9 @@ function endGame(io: Server, room: Room, winner: Winner): void {
   room.winner = winner;
   room.guesserId = null;
   room.gamesPlayed += 1;
-  awardScores(room, winner);
+  const pts = pointsThisGame(room, winner);
+  for (const [id, n] of Object.entries(pts)) room.scores[id] = (room.scores[id] ?? 0) + n;
+  persistResults(room, winner, pts);
   enter(io, room, "GAME_OVER", null);
 }
 
@@ -372,6 +414,39 @@ export function playAgain(io: Server, room: Room): string | null {
   // scores and gamesPlayed persist across the session.
   broadcast(io, room);
   return null;
+}
+
+/** Re-arm the current phase's timer after a restart, using the stored deadline. */
+export function resume(io: Server, room: Room): void {
+  if (room.phaseEndsAt == null) return; // LOBBY / GAME_OVER: nothing to schedule
+  const remMs = Math.max(0, room.phaseEndsAt - Date.now());
+  const sched = (fn: () => void) => {
+    clearTimer(room);
+    room.timer = setTimeout(fn, remMs);
+  };
+  switch (room.phase) {
+    case "ROLE_REVEAL":
+      sched(() => (room.settings.mode === "questions" ? startAnswer(io, room) : startRound(io, room)));
+      break;
+    case "CLUES":
+      sched(() => onClueTimeout(io, room));
+      break;
+    case "ANSWER":
+      sched(() => toDiscussion(io, room));
+      break;
+    case "DISCUSSION":
+      sched(() => startVoting(io, room));
+      break;
+    case "VOTING":
+      sched(() => doTally(io, room));
+      break;
+    case "VOTE_RESULT":
+      sched(() => resolveAfterVote(io, room));
+      break;
+    case "LAST_GUESS":
+      sched(() => wrongGuess(io, room));
+      break;
+  }
 }
 
 export { clearTimer };

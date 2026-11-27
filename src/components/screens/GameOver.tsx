@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import type { ScreenProps } from "@/components/types";
 import { Banner, PlayerRow, Avatar } from "@/components/ui";
+import { makeRecapImage, shareRecap } from "@/lib/share";
 
 export default function GameOver({ view, send }: ScreenProps) {
   const { me, room } = view;
@@ -13,6 +14,17 @@ export default function GameOver({ view, send }: ScreenProps) {
   const ranked = [...room.players]
     .map((p) => ({ p, score: room.scores[p.id] ?? 0 }))
     .sort((a, b) => b.score - a.score);
+  const [sharing, setSharing] = useState(false);
+
+  async function share() {
+    setSharing(true);
+    try {
+      const blob = await makeRecapImage(view);
+      if (blob) await shareRecap(blob);
+    } finally {
+      setSharing(false);
+    }
+  }
 
   const title =
     w?.team === "civilians"
@@ -124,10 +136,24 @@ export default function GameOver({ view, send }: ScreenProps) {
         )}
       </section>
 
+      <button className="btn-ghost" onClick={share} disabled={sharing}>
+        {sharing ? "Preparing…" : "📸 Share result"}
+      </button>
+
       {me.isHost ? (
-        <button className="btn-primary" onClick={() => send("game:again")}>
-          Play again
-        </button>
+        <>
+          <button className="btn-primary" onClick={() => send("game:again")}>
+            Play again
+          </button>
+          <button
+            className="btn-ghost"
+            onClick={() => {
+              if (confirm("End the match and close the room for everyone?")) send("room:close");
+            }}
+          >
+            End match &amp; close room
+          </button>
+        </>
       ) : (
         <p className="text-center text-muted">Waiting for the host to restart…</p>
       )}

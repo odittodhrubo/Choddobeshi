@@ -14,6 +14,9 @@ import {
   reactSchema,
 } from "../shared/schemas";
 import { broadcast, viewFor } from "./game/view";
+import { containsProfanity, makeRateLimiter } from "./moderation";
+import { loadAllRooms, deleteRoom } from "./persistence";
+import { resume } from "./game/engine";
 import {
   startGame,
   submitClue,
@@ -28,6 +31,7 @@ import {
 } from "./game/engine";
 
 const rooms = new Map<string, Room>();
+const startingCodes = new Set<string>(); // rooms mid-AI-generation, to block double-start
 const EMPTY_ROOM_TTL = 10 * 60 * 1000; // delete 10 min after everyone leaves
 
 const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no ambiguous 0/O, 1/I
@@ -63,6 +67,7 @@ function newRoom(code: string): Room {
     gamesPlayed: 0,
     emergencyUsedBy: [],
     voteLog: [],
+    aiRecent: [],
   };
 }
 
@@ -78,6 +83,7 @@ function scheduleCleanup(io: Server, room: Room): void {
     if (r && r.players.every((p) => !p.connected)) {
       clearTimer(r);
       rooms.delete(room.code);
+      deleteRoom(room.code);
     }
   }, EMPTY_ROOM_TTL);
 }
@@ -85,6 +91,26 @@ function scheduleCleanup(io: Server, room: Room): void {
 interface SocketData {
   code?: string;
   playerId?: string;
+  userId?: string | null;
+}
+
+/** Reload persisted rooms on server boot and re-arm their timers. */
+export async function restoreRooms(io: Server): Promise<void> {
+  const saved = await loadAllRooms();
+  for (const room of saved) {
+    rooms.set(room.code, room);
+    resume(io, room); // catch up any phase whose deadline passed while down
+    scheduleCleanup(io, room); // delete if nobody rejoins within the TTL
+  }
+  if (saved.length) console.log(`> Restored ${saved.length} room(s) from the database`);
+}
+
+/** Backfill a player's auth user id once token verification completes. */
+export function attachUser(socket: Socket, userId: string): void {
+  const d = socket.data as SocketData;
+  const room = d.code ? rooms.get(d.code) : undefined;
+  const player = room?.players.find((p) => p.id === d.playerId);
+  if (player) player.userId = userId;
 }
 
 export function registerHandlers(io: Server, socket: Socket): void {
@@ -93,10 +119,22 @@ export function registerHandlers(io: Server, socket: Socket): void {
     socket.emit("error", { message });
   };
 
+  // 30 events / 5s per socket: well above normal play, blocks floods.
+  const allow = makeRateLimiter(30, 5000);
+  const original = socket.on.bind(socket);
+  socket.on = ((event: string, handler: (...a: unknown[]) => void) => {
+    if (event === "disconnect") return original(event, handler);
+    return original(event, (...args: unknown[]) => {
+      if (!allow()) return err("Slow down");
+      handler(...args);
+    });
+  }) as typeof socket.on;
+
   socket.on("room:create", (payload) => {
     const parsed = createSchema.safeParse(payload);
     if (!parsed.success) return err("Invalid name");
     const { name, playerId } = parsed.data;
+    if (containsProfanity(name)) return err("Please choose a cleaner name");
 
     const code = genCode();
     const room = newRoom(code);
@@ -107,6 +145,7 @@ export function registerHandlers(io: Server, socket: Socket): void {
       isHost: true,
       connected: true,
       alive: true,
+      userId: data.userId ?? null,
     };
     room.players.push(player);
     rooms.set(code, room);
@@ -122,6 +161,7 @@ export function registerHandlers(io: Server, socket: Socket): void {
     const parsed = joinSchema.safeParse(payload);
     if (!parsed.success) return err("Invalid join request");
     const { name, playerId } = parsed.data;
+    if (containsProfanity(name)) return err("Please choose a cleaner name");
     const code = parsed.data.code.toUpperCase();
 
     const room = rooms.get(code);
@@ -133,6 +173,7 @@ export function registerHandlers(io: Server, socket: Socket): void {
       player.socketId = socket.id;
       player.connected = true;
       player.name = name;
+      if (data.userId) player.userId = data.userId;
     } else {
       if (room.phase !== "LOBBY") return err("Game already in progress");
       if (room.players.length >= 12) return err("Room is full");
@@ -143,6 +184,7 @@ export function registerHandlers(io: Server, socket: Socket): void {
         isHost: room.players.length === 0,
         connected: true,
         alive: true,
+        userId: data.userId ?? null,
       };
       room.players.push(player);
     }
@@ -177,12 +219,23 @@ export function registerHandlers(io: Server, socket: Socket): void {
     }),
   );
 
-  socket.on("game:start", () => withRoom(true, (room) => startGame(io, room)));
+  socket.on("game:start", () =>
+    withRoom(true, (room) => {
+      if (startingCodes.has(room.code)) return "Starting…";
+      startingCodes.add(room.code);
+      void startGame(io, room)
+        .then((msg) => {
+          if (msg) err(msg);
+        })
+        .finally(() => startingCodes.delete(room.code));
+    }),
+  );
 
   socket.on("clue:submit", (payload) =>
     withRoom(false, (room, player) => {
       const parsed = clueSchema.safeParse(payload);
       if (!parsed.success) return "Clue must be 1 to 30 characters";
+      if (containsProfanity(parsed.data.text)) return "Keep clues clean";
       return submitClue(io, room, player.id, parsed.data.text);
     }),
   );
@@ -191,6 +244,7 @@ export function registerHandlers(io: Server, socket: Socket): void {
     withRoom(false, (room, player) => {
       const parsed = answerSchema.safeParse(payload);
       if (!parsed.success) return "Answer must be 1 to 60 characters";
+      if (containsProfanity(parsed.data.text)) return "Keep answers clean";
       return submitAnswer(io, room, player.id, parsed.data.text);
     }),
   );
@@ -220,6 +274,15 @@ export function registerHandlers(io: Server, socket: Socket): void {
   );
 
   socket.on("game:again", () => withRoom(true, (room) => playAgain(io, room)));
+
+  socket.on("room:close", () =>
+    withRoom(true, (room) => {
+      clearTimer(room);
+      io.to(room.code).emit("closed");
+      rooms.delete(room.code);
+      deleteRoom(room.code);
+    }),
+  );
 
   socket.on("meeting:call", () =>
     withRoom(false, (room, player) => callMeeting(io, room, player.id)),
@@ -252,6 +315,7 @@ export function registerHandlers(io: Server, socket: Socket): void {
     withRoom(false, (room, player) => {
       const parsed = chatSchema.safeParse(payload);
       if (!parsed.success) return "Message too long";
+      if (containsProfanity(parsed.data.text)) return "Keep chat clean";
       const ghost = !player.alive && room.phase !== "GAME_OVER";
       const msg: ChatMsg = { from: player.name, text: parsed.data.text, ghost };
       // Ghost messages go only to other ghosts; living chat goes to everyone.
@@ -277,6 +341,7 @@ export function registerHandlers(io: Server, socket: Socket): void {
       if (room.players.length === 0) {
         clearTimer(room);
         rooms.delete(room.code);
+        deleteRoom(room.code);
         return;
       }
     }

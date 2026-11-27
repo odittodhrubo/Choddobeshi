@@ -43,6 +43,7 @@ function mkRoom(players: Player[], votes: Record<string, string> = {}, round = 1
     gamesPlayed: 0,
     emergencyUsedBy: [],
     voteLog: [],
+    aiRecent: [],
   };
 }
 

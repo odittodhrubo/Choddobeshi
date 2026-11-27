@@ -377,6 +377,342 @@
         "football"
       ],
       "difficulty": "hard"
+    },
+    {
+      "civilian": "Shark",
+      "doppelganger": "Dolphin",
+      "aliases": [],
+      "difficulty": "medium"
+    },
+    {
+      "civilian": "Volcano",
+      "doppelganger": "Mountain",
+      "aliases": [],
+      "difficulty": "medium"
+    },
+    {
+      "civilian": "Spider",
+      "doppelganger": "Ant",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Hammer",
+      "doppelganger": "Wrench",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Soap",
+      "doppelganger": "Shampoo",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Window",
+      "doppelganger": "Door",
+      "aliases": [],
+      "difficulty": "medium"
+    },
+    {
+      "civilian": "Spoon",
+      "doppelganger": "Ladle",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Owl",
+      "doppelganger": "Eagle",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Jacket",
+      "doppelganger": "Sweater",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Lemon",
+      "doppelganger": "Lime",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Bridge",
+      "doppelganger": "Tunnel",
+      "aliases": [],
+      "difficulty": "medium"
+    },
+    {
+      "civilian": "Carpet",
+      "doppelganger": "Curtain",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Ruler",
+      "doppelganger": "Tape",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Butterfly",
+      "doppelganger": "Moth",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Piano",
+      "doppelganger": "Organ",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Helmet",
+      "doppelganger": "Crown",
+      "aliases": [],
+      "difficulty": "medium"
+    },
+    {
+      "civilian": "Rocket",
+      "doppelganger": "Missile",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Garden",
+      "doppelganger": "Farm",
+      "aliases": [],
+      "difficulty": "medium"
+    },
+    {
+      "civilian": "Cloud",
+      "doppelganger": "Fog",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Comb",
+      "doppelganger": "Brush",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Wallet",
+      "doppelganger": "Purse",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Ladder",
+      "doppelganger": "Stairs",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Magnet",
+      "doppelganger": "Battery",
+      "aliases": [],
+      "difficulty": "medium"
+    },
+    {
+      "civilian": "Needle",
+      "doppelganger": "Pin",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Camel",
+      "doppelganger": "Horse",
+      "aliases": [],
+      "difficulty": "medium"
+    },
+    {
+      "civilian": "Igloo",
+      "doppelganger": "Tent",
+      "aliases": [],
+      "difficulty": "medium"
+    },
+    {
+      "civilian": "Violin",
+      "doppelganger": "Cello",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Lake",
+      "doppelganger": "Pond",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Peacock",
+      "doppelganger": "Parrot",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Bakery",
+      "doppelganger": "Cafe",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Mirror",
+      "doppelganger": "Window",
+      "aliases": [],
+      "difficulty": "medium"
+    },
+    {
+      "civilian": "Glove",
+      "doppelganger": "Mitten",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Rope",
+      "doppelganger": "Chain",
+      "aliases": [],
+      "difficulty": "medium"
+    },
+    {
+      "civilian": "Whale",
+      "doppelganger": "Shark",
+      "aliases": [],
+      "difficulty": "medium"
+    },
+    {
+      "civilian": "Scarf",
+      "doppelganger": "Tie",
+      "aliases": [],
+      "difficulty": "medium"
+    },
+    {
+      "civilian": "Fountain",
+      "doppelganger": "Waterfall",
+      "aliases": [],
+      "difficulty": "medium"
+    },
+    {
+      "civilian": "Drum",
+      "doppelganger": "Tabla",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Kite",
+      "doppelganger": "Balloon",
+      "aliases": [],
+      "difficulty": "medium"
+    },
+    {
+      "civilian": "Fox",
+      "doppelganger": "Wolf",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Grape",
+      "doppelganger": "Berry",
+      "aliases": [],
+      "difficulty": "medium"
+    },
+    {
+      "civilian": "Stadium",
+      "doppelganger": "Arena",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Monk",
+      "doppelganger": "Priest",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Submarine",
+      "doppelganger": "Ship",
+      "aliases": [],
+      "difficulty": "medium"
+    },
+    {
+      "civilian": "Elbow",
+      "doppelganger": "Knee",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Jam",
+      "doppelganger": "Jelly",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Crayon",
+      "doppelganger": "Marker",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Harbor",
+      "doppelganger": "Airport",
+      "aliases": [],
+      "difficulty": "medium"
+    },
+    {
+      "civilian": "Penguin",
+      "doppelganger": "Seal",
+      "aliases": [],
+      "difficulty": "medium"
+    },
+    {
+      "civilian": "Saddle",
+      "doppelganger": "Leash",
+      "aliases": [],
+      "difficulty": "medium"
+    },
+    {
+      "civilian": "Compass",
+      "doppelganger": "Map",
+      "aliases": [],
+      "difficulty": "medium"
+    },
+    {
+      "civilian": "Trumpet",
+      "doppelganger": "Flute",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Cabbage",
+      "doppelganger": "Lettuce",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Chimney",
+      "doppelganger": "Roof",
+      "aliases": [],
+      "difficulty": "medium"
+    },
+    {
+      "civilian": "Dragon",
+      "doppelganger": "Phoenix",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Puzzle",
+      "doppelganger": "Maze",
+      "aliases": [],
+      "difficulty": "medium"
+    },
+    {
+      "civilian": "Robin",
+      "doppelganger": "Sparrow",
+      "aliases": [],
+      "difficulty": "hard"
     }
   ]
 }

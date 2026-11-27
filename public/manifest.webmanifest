@@ -1,0 +1,14 @@
+{
+  "name": "Choddobeshi",
+  "short_name": "Choddobeshi",
+  "description": "Social deduction word game. Spot the Doppelganger and the Chameleon.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0b0f1a",
+  "theme_color": "#0b0f1a",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}

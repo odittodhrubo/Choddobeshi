@@ -3,7 +3,20 @@
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { socket, getName, setName, getPlayerId } from "@/lib/socket";
+import { socket, getName, setName, getPlayerId, setSocketToken } from "@/lib/socket";
+import { supabaseEnabled } from "@/lib/supabase/client";
+import {
+  ensureSession,
+  accessToken,
+  getUsername,
+  saveUsername,
+  getMyStats,
+  getMyAchievements,
+  isGuest,
+  signInWithGoogle,
+  type Stats,
+} from "@/lib/supabase/auth";
+import { ACHIEVEMENTS } from "@/shared/types";
 
 export default function Home() {
   const router = useRouter();
@@ -11,6 +24,9 @@ export default function Home() {
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [badges, setBadges] = useState<string[]>([]);
+  const [guest, setGuest] = useState(true);
 
   useEffect(() => {
     setNameState(getName());
@@ -18,6 +34,20 @@ export default function Home() {
       setError("You were removed from the room.");
       history.replaceState(null, "", "/");
     }
+    // Guest session + token, then load profile/stats (all optional).
+    void (async () => {
+      if (!supabaseEnabled) return;
+      await ensureSession();
+      setSocketToken(await accessToken());
+      const uname = await getUsername();
+      if (uname && !getName()) {
+        setName(uname);
+        setNameState(uname);
+      }
+      setGuest(await isGuest());
+      setStats(await getMyStats());
+      setBadges(await getMyAchievements());
+    })();
   }, []);
 
   function saveName(): boolean {
@@ -28,6 +58,7 @@ export default function Home() {
     }
     setName(n);
     setError("");
+    if (supabaseEnabled) void saveUsername(n);
     return true;
   }
 
@@ -110,9 +141,79 @@ export default function Home() {
         {error && <p className="text-sm text-bad">{error}</p>}
       </div>
 
-      <Link href="/how-to-play" className="text-center text-sm text-brand hover:underline">
-        How to play →
-      </Link>
+      {supabaseEnabled && (stats || guest) && (
+        <div className="card flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <h2 className="font-display font-semibold">Your profile</h2>
+            {guest && <span className="chip bg-warn/20 text-warn">guest</span>}
+          </div>
+
+          {stats && stats.games > 0 ? (
+            <>
+              <div className="flex items-center justify-between rounded-xl border border-line bg-panel2/50 px-4 py-2.5">
+                <span className="font-display font-bold text-brand">Level {level(stats.points)}</span>
+                <span className="text-xs text-muted">{stats.points} XP</span>
+              </div>
+              <div className="grid grid-cols-3 gap-2 text-center">
+                <Stat label="Games" value={stats.games} />
+                <Stat label="Wins" value={stats.wins} />
+                <Stat label="Win rate" value={`${Math.round((stats.wins / stats.games) * 100)}%`} />
+                <Stat
+                  label="Civilian W%"
+                  value={stats.times_civilian ? `${Math.round((stats.civ_wins / stats.times_civilian) * 100)}%` : "—"}
+                />
+                <Stat
+                  label="Impostor W%"
+                  value={stats.times_impostor ? `${Math.round((stats.imp_wins / stats.times_impostor) * 100)}%` : "—"}
+                />
+                <Stat label="Guesses" value={stats.guesser_wins} />
+              </div>
+              {badges.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {ACHIEVEMENTS.filter((a) => badges.includes(a.id)).map((a) => (
+                    <span key={a.id} title={a.desc} className="chip bg-panel2 text-ink">
+                      {a.icon} {a.label}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </>
+          ) : (
+            <p className="text-sm text-muted">Play a game to start tracking your stats.</p>
+          )}
+
+          {guest && (
+            <button className="btn-ghost" onClick={() => void signInWithGoogle()}>
+              Sign in with Google to save progress
+            </button>
+          )}
+        </div>
+      )}
+
+      <div className="flex justify-center gap-5 text-sm">
+        <Link href="/how-to-play" className="text-brand hover:underline">
+          How to play →
+        </Link>
+        {supabaseEnabled && (
+          <Link href="/leaderboard" className="text-brand hover:underline">
+            Leaderboard →
+          </Link>
+        )}
+      </div>
     </main>
+  );
+}
+
+// Level curve: each level needs a bit more XP than the last.
+function level(points: number): number {
+  return Math.floor(0.5 + Math.sqrt(Math.max(0, points) / 10)) + 1;
+}
+
+function Stat({ label, value }: { label: string; value: number | string }) {
+  return (
+    <div className="rounded-xl border border-line bg-panel2/50 px-2 py-2">
+      <div className="font-display text-xl font-bold text-brand">{value}</div>
+      <div className="text-[11px] text-muted">{label}</div>
+    </div>
   );
 }

@@ -24,6 +24,7 @@ export interface Player {
   alive: boolean;
   role?: Role; // server only
   word?: string | null; // server only
+  userId?: string | null; // server only: Supabase auth user id, if signed in
 }
 
 export interface Clue {
@@ -46,11 +47,23 @@ export interface VoteRecord {
   eliminatedId: string | null;
 }
 
+export const ACHIEVEMENTS = [
+  { id: "first_game", label: "First Steps", desc: "Play your first game", icon: "🎮" },
+  { id: "veteran", label: "Veteran", desc: "Play 10 games", icon: "🎖️" },
+  { id: "winner", label: "On a Roll", desc: "Win 5 games", icon: "🏆" },
+  { id: "impostor", label: "Master of Disguise", desc: "Win 5 times as impostor", icon: "🎭" },
+  { id: "detective", label: "Sharp Eye", desc: "Win 10 times as civilian", icon: "🔍" },
+  { id: "guesser", label: "Mind Reader", desc: "Guess the secret word", icon: "🎯" },
+  { id: "century", label: "Centurion", desc: "Earn 100 points", icon: "💯" },
+] as const;
+
 export const WORD_PACKS: { id: string; name: string }[] = [
   { id: "en-general", name: "General" },
   { id: "en-food", name: "Food & Drink" },
   { id: "en-movies", name: "Movies & TV" },
+  { id: "en-geography", name: "Geography" },
   { id: "bn-general", name: "বাংলা" },
+  { id: "ai", name: "AI ✨" },
   { id: "custom", name: "Custom" },
 ];
 
@@ -101,6 +114,7 @@ export interface Room {
   gamesPlayed: number;
   emergencyUsedBy: string[]; // player ids who used their meeting this game
   voteLog: VoteRecord[]; // per-vote history for the end-of-game recap
+  aiRecent: string[]; // recent AI-generated words/questions, to reduce repeats
   timer?: ReturnType<typeof setTimeout>; // server only
 }
 

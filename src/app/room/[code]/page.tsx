@@ -2,7 +2,8 @@
 
 import { use, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { socket, getName, getPlayerId } from "@/lib/socket";
+import { socket, getName, getPlayerId, setSocketToken } from "@/lib/socket";
+import { ensureSession, accessToken } from "@/lib/supabase/auth";
 import { play } from "@/lib/sfx";
 import type { ChatMsg, PlayerView } from "@/shared/types";
 import Lobby from "@/components/screens/Lobby";
@@ -61,6 +62,10 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
       socket.disconnect();
       router.replace("/?kicked=1");
     };
+    const onClosed = () => {
+      socket.disconnect();
+      router.replace("/");
+    };
     const onConnect = () => {
       setOnline(true);
       socket.emit("room:join", { code: code.toUpperCase(), name, playerId });
@@ -72,11 +77,18 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
     socket.on("chat", onChat);
     socket.on("reaction", onReaction);
     socket.on("kicked", onKicked);
+    socket.on("closed", onClosed);
     socket.on("connect", onConnect); // fires on first connect AND every reconnect
     socket.on("disconnect", onDisconnect);
 
-    if (socket.connected) onConnect();
-    else socket.connect();
+    // Attach the Supabase guest token (if any) before connecting, so the
+    // server can attribute stats. Falls through to a guest game if unavailable.
+    void (async () => {
+      await ensureSession();
+      setSocketToken(await accessToken());
+      if (socket.connected) onConnect();
+      else socket.connect();
+    })();
 
     return () => {
       socket.off("state", onState);
@@ -84,6 +96,7 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
       socket.off("chat", onChat);
       socket.off("reaction", onReaction);
       socket.off("kicked", onKicked);
+      socket.off("closed", onClosed);
       socket.off("connect", onConnect);
       socket.off("disconnect", onDisconnect);
     };

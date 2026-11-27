@@ -129,6 +129,146 @@
     {
       "civilian": "Something that melts",
       "imposter": "Something that burns"
+    },
+    {
+      "civilian": "Name a mode of transport",
+      "imposter": "Name a mode of communication"
+    },
+    {
+      "civilian": "Something in a classroom",
+      "imposter": "Something in an office"
+    },
+    {
+      "civilian": "A reason to celebrate",
+      "imposter": "A reason to apologise"
+    },
+    {
+      "civilian": "Something you lose often",
+      "imposter": "Something you forget often"
+    },
+    {
+      "civilian": "A type of weather",
+      "imposter": "A type of mood"
+    },
+    {
+      "civilian": "Something in a wallet",
+      "imposter": "Something in a toolbox"
+    },
+    {
+      "civilian": "A gift for a child",
+      "imposter": "A gift for a grandparent"
+    },
+    {
+      "civilian": "Something you boil",
+      "imposter": "Something you fry"
+    },
+    {
+      "civilian": "A sound in a city",
+      "imposter": "A sound in a jungle"
+    },
+    {
+      "civilian": "A place that is quiet",
+      "imposter": "A place that is crowded"
+    },
+    {
+      "civilian": "Something you charge",
+      "imposter": "Something you refill"
+    },
+    {
+      "civilian": "A job with a uniform",
+      "imposter": "A job with a desk"
+    },
+    {
+      "civilian": "Something sticky",
+      "imposter": "Something slippery"
+    },
+    {
+      "civilian": "A thing on a beach",
+      "imposter": "A thing on a mountain"
+    },
+    {
+      "civilian": "Something you water",
+      "imposter": "Something you feed"
+    },
+    {
+      "civilian": "A reason to run",
+      "imposter": "A reason to hide"
+    },
+    {
+      "civilian": "Something in a hospital",
+      "imposter": "Something in a gym"
+    },
+    {
+      "civilian": "A thing that spins",
+      "imposter": "A thing that bounces"
+    },
+    {
+      "civilian": "Something you whisper",
+      "imposter": "Something you shout"
+    },
+    {
+      "civilian": "A tool for cooking",
+      "imposter": "A tool for cleaning"
+    },
+    {
+      "civilian": "Something found underground",
+      "imposter": "Something found in the sky"
+    },
+    {
+      "civilian": "A thing you fold",
+      "imposter": "A thing you roll"
+    },
+    {
+      "civilian": "Something warm to wear",
+      "imposter": "Something warm to drink"
+    },
+    {
+      "civilian": "A place with sand",
+      "imposter": "A place with snow"
+    },
+    {
+      "civilian": "Something that ticks",
+      "imposter": "Something that rings"
+    },
+    {
+      "civilian": "A reason to smile",
+      "imposter": "A reason to cry"
+    },
+    {
+      "civilian": "Something in a kitchen drawer",
+      "imposter": "Something in a bathroom cabinet"
+    },
+    {
+      "civilian": "A thing with buttons",
+      "imposter": "A thing with wheels"
+    },
+    {
+      "civilian": "Something you pour",
+      "imposter": "Something you scoop"
+    },
+    {
+      "civilian": "A room in a house",
+      "imposter": "A shop on a street"
+    },
+    {
+      "civilian": "Something that floats",
+      "imposter": "Something that sinks"
+    },
+    {
+      "civilian": "A thing you plug in",
+      "imposter": "A thing you wind up"
+    },
+    {
+      "civilian": "Something you grow",
+      "imposter": "Something you build"
+    },
+    {
+      "civilian": "A sport in water",
+      "imposter": "A sport on ice"
+    },
+    {
+      "civilian": "Something you post",
+      "imposter": "Something you print"
     }
   ]
 }
