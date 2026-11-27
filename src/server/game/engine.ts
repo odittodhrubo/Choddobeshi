@@ -7,6 +7,7 @@ import { isCorrectGuess, normalize } from "./guess";
 import { pickPair } from "../words";
 import { pickQuestion } from "../questions";
 import { generateWordPair, generateQuestionPair } from "../ai";
+import { saveAiWordPair, saveAiQuestionPair } from "../content";
 import { broadcast } from "./view";
 import { recordResult, recordPair } from "../supabase";
 
@@ -60,15 +61,16 @@ export async function startGame(io: Server, room: Room): Promise<string | null> 
         const q = await generateQuestionPair(room.aiRecent);
         if (q) {
           room.aiRecent.push(q.civilian);
+          void saveAiQuestionPair(q);
           assignQuestionRoles(room, q);
         } else {
-          const { pair, index } = pickQuestion(room.usedPairs);
-          room.usedPairs.push(index);
+          const { pair, key } = pickQuestion(room.usedPairs);
+          room.usedPairs.push(key);
           assignQuestionRoles(room, pair);
         }
       } else {
-        const { pair, index } = pickQuestion(room.usedPairs);
-        room.usedPairs.push(index);
+        const { pair, key } = pickQuestion(room.usedPairs);
+        room.usedPairs.push(key);
         assignQuestionRoles(room, pair);
       }
     } else if (custom && room.settings.customWord) {
@@ -77,15 +79,16 @@ export async function startGame(io: Server, room: Room): Promise<string | null> 
       const p = await generateWordPair(room.settings.difficulty, room.aiRecent);
       if (p) {
         room.aiRecent.push(p.civilian);
+        void saveAiWordPair(p);
         assignRoles(room, { ...p, aliases: [] });
       } else {
-        const { pair, index } = pickPair("en-general", room.usedPairs, room.settings.difficulty);
-        room.usedPairs.push(index);
+        const { pair, key: pk } = pickPair("en-general", room.usedPairs, room.settings.difficulty);
+        room.usedPairs.push(pk);
         assignRoles(room, pair);
       }
     } else {
-      const { pair, index, key: k } = pickPair(room.settings.wordPack, room.usedPairs, room.settings.difficulty);
-      room.usedPairs.push(index);
+      const { pair, key: k } = pickPair(room.settings.wordPack, room.usedPairs, room.settings.difficulty);
+      room.usedPairs.push(k);
       key = k;
       assignRoles(room, pair);
     }

@@ -6,6 +6,9 @@ import { isCorrectGuess, normalize } from "../game/guess";
 import { defaultCounts, makeTurnOrder, validateRoleMix } from "../game/roles";
 import { teamOf, featuredPack, levelFor } from "../../shared/types";
 import { containsProfanity } from "../moderation";
+import { pickPair, setExcludedPairs, pairKey } from "../words";
+import { pickQuestion } from "../questions";
+import { getPack, getPacks, getQuestions, contentSource } from "../content";
 import { validateClue } from "../game/engine";
 
 function mkPlayer(id: string, role: Player["role"], alive = true): Player {
@@ -246,5 +249,62 @@ describe("misc rules", () => {
   it("profanity filter catches leetspeak", () => {
     expect(containsProfanity("sh1t")).toBe(true);
     expect(containsProfanity("hello friend")).toBe(false);
+  });
+});
+
+describe("content store (built-in fallback)", () => {
+  it("falls back to the bundled packs when the database is not used", () => {
+    expect(contentSource()).toBe("builtin");
+    expect(getPacks().length).toBeGreaterThanOrEqual(5);
+    expect(getPack("en-general")?.pairs.length).toBeGreaterThan(50);
+    expect(getQuestions().length).toBeGreaterThan(30);
+  });
+
+  it("pickPair returns a stable key and avoids pairs already played", () => {
+    const used: string[] = [];
+    const seen = new Set<string>();
+    const total = getPack("en-food")!.pairs.length;
+    for (let i = 0; i < total; i++) {
+      const { key } = pickPair("en-food", used, "mixed");
+      expect(used.includes(key)).toBe(false);
+      used.push(key);
+      seen.add(key);
+    }
+    expect(seen.size).toBe(total); // never repeated before the pack ran out
+  });
+
+  it("pickPair falls back to General for an unknown pack", () => {
+    const { key } = pickPair("does-not-exist", [], "mixed");
+    expect(key.startsWith("en-general:")).toBe(true);
+  });
+
+  it("pickPair skips pairs flagged by balance data", () => {
+    const pack = getPack("en-geography")!;
+    const [keep, ...rest] = pack.pairs;
+    setExcludedPairs(new Set(rest.map((p) => pairKey(pack.id, p))));
+    for (let i = 0; i < 20; i++) {
+      expect(pickPair("en-geography", [], "mixed").key).toBe(pairKey(pack.id, keep));
+    }
+    setExcludedPairs(new Set());
+  });
+
+  it("pickPair still works if every pair is flagged (never stalls)", () => {
+    const pack = getPack("en-movies")!;
+    setExcludedPairs(new Set(pack.pairs.map((p) => pairKey(pack.id, p))));
+    expect(() => pickPair("en-movies", [], "mixed")).not.toThrow();
+    setExcludedPairs(new Set());
+  });
+
+  it("pickQuestion cycles through every question before repeating", () => {
+    const used: string[] = [];
+    const n = getQuestions().length;
+    const keys = new Set<string>();
+    for (let i = 0; i < n; i++) {
+      const { key } = pickQuestion(used);
+      keys.add(key);
+      used.push(key);
+    }
+    expect(keys.size).toBe(n);
+    expect(() => pickQuestion(used)).not.toThrow(); // exhausted -> reuses
   });
 });

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import QRCode from "qrcode";
 import type { ScreenProps } from "@/components/types";
-import { WORD_PACKS, featuredPack } from "@/shared/types";
+import { featuredPack } from "@/shared/types";
 import { PlayerRow, Avatar, ReportButton } from "@/components/ui";
 
 export default function Lobby({ view, send }: ScreenProps) {
@@ -28,6 +28,8 @@ export default function Lobby({ view, send }: ScreenProps) {
   const rolesOk =
     isQuestions || (d + c >= 1 && civTeam - det >= 1 && d + c < civTeam);
   const daily = featuredPack();
+  // Packs come from the server (database); AI and Custom are always available.
+  const packList = [...room.packs, { id: "ai", name: "AI ✨" }, { id: "custom", name: "Custom" }];
   const isCustom = room.settings.wordPack === "custom";
   const customReady =
     !isCustom ||
@@ -219,7 +221,7 @@ export default function Lobby({ view, send }: ScreenProps) {
         <section className="card flex flex-col gap-3">
           <h2 className="font-display font-semibold">Word pack</h2>
           <div className="grid grid-cols-3 gap-1.5">
-            {WORD_PACKS.map((wp) => (
+            {packList.map((wp) => (
               <button
                 key={wp.id}
                 onClick={() => send("room:settings", { wordPack: wp.id })}

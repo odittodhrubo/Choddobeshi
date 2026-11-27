@@ -1,34 +1,6 @@
-import en from "./words/en.json";
-import bn from "./words/bn.json";
-import movies from "./words/movies.json";
-import food from "./words/food.json";
-import geography from "./words/geography.json";
+import { getPack, getPacks, type Difficulty, type Pair } from "./content";
 
-export type Difficulty = "easy" | "medium" | "hard" | "mixed";
-
-export interface Pair {
-  civilian: string;
-  doppelganger: string;
-  aliases: string[];
-  difficulty?: Difficulty;
-}
-export interface Pack {
-  id: string;
-  name: string;
-  pairs: Pair[];
-}
-
-const packs: Record<string, Pack> = {
-  [en.id]: en as Pack,
-  [food.id]: food as Pack,
-  [movies.id]: movies as Pack,
-  [geography.id]: geography as Pack,
-  [bn.id]: bn as Pack,
-};
-
-export function listPacks(): { id: string; name: string }[] {
-  return Object.values(packs).map((p) => ({ id: p.id, name: p.name }));
-}
+export type { Difficulty, Pair } from "./content";
 
 /** Pairs the balance data says are too easy or too hard. Refreshed by the server. */
 let excluded = new Set<string>();
@@ -41,32 +13,32 @@ export const pairKey = (packId: string, raw: { civilian: string; doppelganger: s
 
 /**
  * Pick an unused pair from a pack and randomly swap which word is the
- * civilian word. Returns the chosen pair plus its index, so the room can
- * avoid repeats within one session, and a stable key for balance stats.
+ * civilian word. `used` holds keys of pairs already played this session
+ * (keys, not positions, so a content refresh can never cause repeats).
  */
 export function pickPair(
   packId: string,
-  used: number[],
+  used: string[],
   difficulty: Difficulty = "mixed",
-): { pair: Pair; index: number; key: string } {
-  const pack = packs[packId] ?? packs[en.id];
-  const all = pack.pairs.map((_, i) => i);
+): { pair: Pair; key: string } {
+  const pack = getPack(packId) ?? getPack("en-general") ?? getPacks()[0];
+  const all = pack.pairs;
+  const keyOf = (p: Pair) => pairKey(pack.id, p);
+
   // Drop pairs flagged by balance data, unless that would empty the pool.
-  const balanced = all.filter((i) => !excluded.has(pairKey(pack.id, pack.pairs[i])));
+  const balanced = all.filter((p) => !excluded.has(keyOf(p)));
   const base = balanced.length ? balanced : all;
-  const matchesDiff = (i: number) =>
-    difficulty === "mixed" || (pack.pairs[i].difficulty ?? "medium") === difficulty;
-  const unused = base.filter((i) => !used.includes(i) && matchesDiff(i));
+  const matchesDiff = (p: Pair) => difficulty === "mixed" || (p.difficulty ?? "medium") === difficulty;
+  const unused = base.filter((p) => !used.includes(keyOf(p)) && matchesDiff(p));
   // Fall back: all of this difficulty, then the whole pack, so the game never stalls.
   const sameDiff = base.filter(matchesDiff);
   const pool = unused.length ? unused : sameDiff.length ? sameDiff : base;
-  const index = pool[Math.floor(Math.random() * pool.length)];
-  const raw = pack.pairs[index];
+  const raw = pool[Math.floor(Math.random() * pool.length)];
 
   const swap = Math.random() < 0.5;
   const pair: Pair = swap
     ? { civilian: raw.doppelganger, doppelganger: raw.civilian, aliases: [] }
     : { civilian: raw.civilian, doppelganger: raw.doppelganger, aliases: raw.aliases ?? [] };
 
-  return { pair, index, key: pairKey(pack.id, raw) };
+  return { pair, key: keyOf(raw) };
 }

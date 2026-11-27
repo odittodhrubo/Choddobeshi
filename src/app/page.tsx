@@ -293,6 +293,11 @@ export default function Home() {
             Friends →
           </Link>
         )}
+        {supabaseEnabled && (
+          <Link href="/contribute" className="text-brand hover:underline">
+            Suggest words →
+          </Link>
+        )}
       </div>
     </main>
   );

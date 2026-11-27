@@ -87,6 +87,8 @@ function normalizeRoom(room: Room): Room {
   room.peeks ??= {};
   room.reports ??= [];
   room.pairKey ??= null;
+  // Older snapshots tracked played pairs by position (numbers); keys are strings now.
+  room.usedPairs = (room.usedPairs ?? []).filter((x): x is string => typeof x === "string");
   room.voteLog ??= [];
   room.emergencyUsedBy ??= [];
   room.aiRecent ??= [];

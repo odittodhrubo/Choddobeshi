@@ -2,6 +2,7 @@ import type { Server } from "socket.io";
 import type { PlayerView, PublicPlayer, Room } from "../../shared/types";
 import { countVotes } from "./votes";
 import { saveRoom } from "../persistence";
+import { getPacks } from "../content";
 
 export function viewFor(room: Room, playerId: string): PlayerView {
   const me = room.players.find((p) => p.id === playerId)!;
@@ -52,6 +53,7 @@ export function viewFor(room: Room, playerId: string): PlayerView {
       turnIndex: room.turnIndex,
       clues: room.clues,
       mode: room.settings.mode,
+      packs: getPacks().map((p) => ({ id: p.id, name: p.name })),
       // Finished answer rounds only: an in-progress round stays hidden.
       answerRounds: room.answerHistory.length ? room.answerHistory : undefined,
       players,

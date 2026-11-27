@@ -2,20 +2,97 @@
   "id": "en-movies",
   "name": "Movies & TV",
   "pairs": [
-    { "civilian": "Batman", "doppelganger": "Superman", "aliases": [], "difficulty": "hard" },
-    { "civilian": "Zombie", "doppelganger": "Vampire", "aliases": [], "difficulty": "hard" },
-    { "civilian": "Wizard", "doppelganger": "Witch", "aliases": [], "difficulty": "hard" },
-    { "civilian": "Pirate", "doppelganger": "Ninja", "aliases": [], "difficulty": "easy" },
-    { "civilian": "Robot", "doppelganger": "Cyborg", "aliases": [], "difficulty": "hard" },
-    { "civilian": "Dragon", "doppelganger": "Dinosaur", "aliases": [], "difficulty": "medium" },
-    { "civilian": "Comedy", "doppelganger": "Horror", "aliases": [], "difficulty": "easy" },
-    { "civilian": "Hero", "doppelganger": "Villain", "aliases": [], "difficulty": "medium" },
-    { "civilian": "Cartoon", "doppelganger": "Anime", "aliases": [], "difficulty": "hard" },
-    { "civilian": "Sequel", "doppelganger": "Remake", "aliases": [], "difficulty": "hard" },
-    { "civilian": "Actor", "doppelganger": "Director", "aliases": [], "difficulty": "medium" },
-    { "civilian": "Cinema", "doppelganger": "Theatre", "aliases": ["theater"], "difficulty": "medium" },
-    { "civilian": "Spy", "doppelganger": "Detective", "aliases": [], "difficulty": "medium" },
-    { "civilian": "Alien", "doppelganger": "Ghost", "aliases": [], "difficulty": "easy" },
-    { "civilian": "Sitcom", "doppelganger": "Drama", "aliases": [], "difficulty": "hard" }
+    {
+      "civilian": "Batman",
+      "doppelganger": "Superman",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Zombie",
+      "doppelganger": "Vampire",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Wizard",
+      "doppelganger": "Witch",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Pirate",
+      "doppelganger": "Ninja",
+      "aliases": [],
+      "difficulty": "easy"
+    },
+    {
+      "civilian": "Robot",
+      "doppelganger": "Cyborg",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Dragon",
+      "doppelganger": "Dinosaur",
+      "aliases": [],
+      "difficulty": "medium"
+    },
+    {
+      "civilian": "Comedy",
+      "doppelganger": "Horror",
+      "aliases": [],
+      "difficulty": "easy"
+    },
+    {
+      "civilian": "Hero",
+      "doppelganger": "Villain",
+      "aliases": [],
+      "difficulty": "medium"
+    },
+    {
+      "civilian": "Cartoon",
+      "doppelganger": "Anime",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Sequel",
+      "doppelganger": "Remake",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Actor",
+      "doppelganger": "Director",
+      "aliases": [],
+      "difficulty": "medium"
+    },
+    {
+      "civilian": "Cinema",
+      "doppelganger": "Theatre",
+      "aliases": [
+        "theater"
+      ],
+      "difficulty": "medium"
+    },
+    {
+      "civilian": "Spy",
+      "doppelganger": "Detective",
+      "aliases": [],
+      "difficulty": "medium"
+    },
+    {
+      "civilian": "Alien",
+      "doppelganger": "Ghost",
+      "aliases": [],
+      "difficulty": "easy"
+    },
+    {
+      "civilian": "Sitcom",
+      "doppelganger": "Drama",
+      "aliases": [],
+      "difficulty": "hard"
+    }
   ]
 }

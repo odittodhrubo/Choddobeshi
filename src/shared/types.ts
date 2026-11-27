@@ -172,7 +172,7 @@ export interface Room {
   lastEliminated: string | null;
   guesserId: string | null; // the caught impostor during LAST_GUESS
   winner: Winner | null;
-  usedPairs: number[]; // pack pair indices already played this session
+  usedPairs: string[]; // keys of pairs already played this session
   scores: Record<string, number>; // session leaderboard, by player id
   gamesPlayed: number;
   emergencyUsedBy: string[]; // player ids who used their meeting this game
@@ -223,6 +223,7 @@ export interface PlayerView {
     turnIndex: number;
     clues: Clue[];
     mode: GameMode;
+    packs: { id: string; name: string }[]; // word packs available right now
     answerRounds?: Record<string, string>[]; // finished answer rounds
     players: PublicPlayer[];
     lastEliminated: string | null;

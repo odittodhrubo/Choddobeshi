@@ -17,6 +17,11 @@ function getVerifier(): SupabaseClient | null {
   return verifier;
 }
 
+/** Server-only Supabase client using the secret key, or null if not configured. */
+export function adminClient(): SupabaseClient | null {
+  return getAdmin();
+}
+
 function getAdmin(): SupabaseClient | null {
   if (admin === undefined) {
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;

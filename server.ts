@@ -4,6 +4,7 @@ import { Server } from "socket.io";
 import { registerHandlers, attachUser, restoreRooms } from "./src/server/rooms";
 import { verifyToken, loadExcludedPairs } from "./src/server/supabase";
 import { setExcludedPairs } from "./src/server/words";
+import { refreshContent } from "./src/server/content";
 
 const dev = process.env.NODE_ENV !== "production";
 const port = Number(process.env.PORT ?? 3000);
@@ -34,6 +35,10 @@ app.prepare().then(() => {
   });
 
   void restoreRooms(io); // reload any games that were live before a restart
+
+  // Words and questions come from the database; refresh them on a timer.
+  void refreshContent();
+  setInterval(() => void refreshContent(), 5 * 60 * 1000).unref();
 
   // Keep lopsided word pairs out of rotation, using logged balance data.
   const refreshBalance = () => void loadExcludedPairs().then(setExcludedPairs);

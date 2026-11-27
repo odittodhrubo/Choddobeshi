@@ -2,30 +2,155 @@
   "id": "en-geography",
   "name": "Geography",
   "pairs": [
-    { "civilian": "France", "doppelganger": "Italy", "aliases": [], "difficulty": "hard" },
-    { "civilian": "Japan", "doppelganger": "China", "aliases": [], "difficulty": "medium" },
-    { "civilian": "Egypt", "doppelganger": "Morocco", "aliases": [], "difficulty": "hard" },
-    { "civilian": "Brazil", "doppelganger": "Argentina", "aliases": [], "difficulty": "medium" },
-    { "civilian": "Canada", "doppelganger": "Russia", "aliases": [], "difficulty": "medium" },
-    { "civilian": "India", "doppelganger": "Pakistan", "aliases": [], "difficulty": "medium" },
-    { "civilian": "Spain", "doppelganger": "Portugal", "aliases": [], "difficulty": "hard" },
-    { "civilian": "Norway", "doppelganger": "Sweden", "aliases": [], "difficulty": "hard" },
-    { "civilian": "Mexico", "doppelganger": "Peru", "aliases": [], "difficulty": "medium" },
-    { "civilian": "Germany", "doppelganger": "Austria", "aliases": [], "difficulty": "hard" },
-    { "civilian": "Greece", "doppelganger": "Turkey", "aliases": [], "difficulty": "medium" },
-    { "civilian": "Thailand", "doppelganger": "Vietnam", "aliases": [], "difficulty": "hard" },
-    { "civilian": "Kenya", "doppelganger": "Nigeria", "aliases": [], "difficulty": "medium" },
-    { "civilian": "Iceland", "doppelganger": "Greenland", "aliases": [], "difficulty": "hard" },
-    { "civilian": "Paris", "doppelganger": "London", "aliases": [], "difficulty": "medium" },
-    { "civilian": "Dubai", "doppelganger": "Qatar", "aliases": [], "difficulty": "medium" },
-    { "civilian": "Sahara", "doppelganger": "Amazon", "aliases": [], "difficulty": "easy" },
-    { "civilian": "Everest", "doppelganger": "Alps", "aliases": [], "difficulty": "medium" },
-    { "civilian": "Nile", "doppelganger": "Ganges", "aliases": [], "difficulty": "hard" },
-    { "civilian": "Ocean", "doppelganger": "Desert", "aliases": [], "difficulty": "easy" },
-    { "civilian": "Island", "doppelganger": "Peninsula", "aliases": [], "difficulty": "hard" },
-    { "civilian": "Volcano", "doppelganger": "Glacier", "aliases": [], "difficulty": "medium" },
-    { "civilian": "Dhaka", "doppelganger": "Kolkata", "aliases": [], "difficulty": "hard" },
-    { "civilian": "Australia", "doppelganger": "New Zealand", "aliases": [], "difficulty": "medium" },
-    { "civilian": "Switzerland", "doppelganger": "Nepal", "aliases": [], "difficulty": "medium" }
+    {
+      "civilian": "France",
+      "doppelganger": "Italy",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Japan",
+      "doppelganger": "China",
+      "aliases": [],
+      "difficulty": "medium"
+    },
+    {
+      "civilian": "Egypt",
+      "doppelganger": "Morocco",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Brazil",
+      "doppelganger": "Argentina",
+      "aliases": [],
+      "difficulty": "medium"
+    },
+    {
+      "civilian": "Canada",
+      "doppelganger": "Russia",
+      "aliases": [],
+      "difficulty": "medium"
+    },
+    {
+      "civilian": "India",
+      "doppelganger": "Pakistan",
+      "aliases": [],
+      "difficulty": "medium"
+    },
+    {
+      "civilian": "Spain",
+      "doppelganger": "Portugal",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Norway",
+      "doppelganger": "Sweden",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Mexico",
+      "doppelganger": "Peru",
+      "aliases": [],
+      "difficulty": "medium"
+    },
+    {
+      "civilian": "Germany",
+      "doppelganger": "Austria",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Greece",
+      "doppelganger": "Turkey",
+      "aliases": [],
+      "difficulty": "medium"
+    },
+    {
+      "civilian": "Thailand",
+      "doppelganger": "Vietnam",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Kenya",
+      "doppelganger": "Nigeria",
+      "aliases": [],
+      "difficulty": "medium"
+    },
+    {
+      "civilian": "Iceland",
+      "doppelganger": "Greenland",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Paris",
+      "doppelganger": "London",
+      "aliases": [],
+      "difficulty": "medium"
+    },
+    {
+      "civilian": "Dubai",
+      "doppelganger": "Qatar",
+      "aliases": [],
+      "difficulty": "medium"
+    },
+    {
+      "civilian": "Sahara",
+      "doppelganger": "Amazon",
+      "aliases": [],
+      "difficulty": "easy"
+    },
+    {
+      "civilian": "Everest",
+      "doppelganger": "Alps",
+      "aliases": [],
+      "difficulty": "medium"
+    },
+    {
+      "civilian": "Nile",
+      "doppelganger": "Ganges",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Ocean",
+      "doppelganger": "Desert",
+      "aliases": [],
+      "difficulty": "easy"
+    },
+    {
+      "civilian": "Island",
+      "doppelganger": "Peninsula",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Volcano",
+      "doppelganger": "Glacier",
+      "aliases": [],
+      "difficulty": "medium"
+    },
+    {
+      "civilian": "Dhaka",
+      "doppelganger": "Kolkata",
+      "aliases": [],
+      "difficulty": "hard"
+    },
+    {
+      "civilian": "Australia",
+      "doppelganger": "New Zealand",
+      "aliases": [],
+      "difficulty": "medium"
+    },
+    {
+      "civilian": "Switzerland",
+      "doppelganger": "Nepal",
+      "aliases": [],
+      "difficulty": "medium"
+    }
   ]
 }
