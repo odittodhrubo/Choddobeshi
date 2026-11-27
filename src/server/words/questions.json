@@ -1,0 +1,134 @@
+{
+  "id": "questions-general",
+  "name": "Questions: General",
+  "pairs": [
+    {
+      "civilian": "Name a food you'd eat for breakfast",
+      "imposter": "Name a food you'd eat for dinner"
+    },
+    {
+      "civilian": "A place you'd go on holiday",
+      "imposter": "A place you'd go for work"
+    },
+    {
+      "civilian": "Something you find in a kitchen",
+      "imposter": "Something you find in a bathroom"
+    },
+    {
+      "civilian": "Name a famous singer",
+      "imposter": "Name a famous actor"
+    },
+    {
+      "civilian": "Name something cold",
+      "imposter": "Name something hot"
+    },
+    {
+      "civilian": "A sport played with a ball",
+      "imposter": "A sport played without a ball"
+    },
+    {
+      "civilian": "An animal you'd keep as a pet",
+      "imposter": "An animal you'd see at a zoo"
+    },
+    {
+      "civilian": "Something you do in the morning",
+      "imposter": "Something you do at night"
+    },
+    {
+      "civilian": "Name a fruit",
+      "imposter": "Name a vegetable"
+    },
+    {
+      "civilian": "Something that flies",
+      "imposter": "Something that swims"
+    },
+    {
+      "civilian": "A movie you'd watch with family",
+      "imposter": "A movie you'd watch alone"
+    },
+    {
+      "civilian": "Name something expensive",
+      "imposter": "Name something cheap"
+    },
+    {
+      "civilian": "A drink with caffeine",
+      "imposter": "A drink without caffeine"
+    },
+    {
+      "civilian": "Something you wear in winter",
+      "imposter": "Something you wear in summer"
+    },
+    {
+      "civilian": "A job that works indoors",
+      "imposter": "A job that works outdoors"
+    },
+    {
+      "civilian": "Name a board game",
+      "imposter": "Name a video game"
+    },
+    {
+      "civilian": "Something in your pocket",
+      "imposter": "Something in your fridge"
+    },
+    {
+      "civilian": "A reason to be late",
+      "imposter": "A reason to leave early"
+    },
+    {
+      "civilian": "Name a colour",
+      "imposter": "Name a shape"
+    },
+    {
+      "civilian": "A thing in the sky",
+      "imposter": "A thing in the sea"
+    },
+    {
+      "civilian": "Something you read",
+      "imposter": "Something you watch"
+    },
+    {
+      "civilian": "A tool",
+      "imposter": "A toy"
+    },
+    {
+      "civilian": "Something round",
+      "imposter": "Something flat"
+    },
+    {
+      "civilian": "A hot drink",
+      "imposter": "A cold drink"
+    },
+    {
+      "civilian": "Something loud",
+      "imposter": "Something quiet"
+    },
+    {
+      "civilian": "A thing with wheels",
+      "imposter": "A thing with wings"
+    },
+    {
+      "civilian": "Name a country",
+      "imposter": "Name a city"
+    },
+    {
+      "civilian": "Something soft",
+      "imposter": "Something hard"
+    },
+    {
+      "civilian": "A school subject",
+      "imposter": "A hobby"
+    },
+    {
+      "civilian": "Something you buy weekly",
+      "imposter": "Something you buy once"
+    },
+    {
+      "civilian": "A thing in a park",
+      "imposter": "A thing in an office"
+    },
+    {
+      "civilian": "Something that melts",
+      "imposter": "Something that burns"
+    }
+  ]
+}

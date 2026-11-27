@@ -1,0 +1,21 @@
+{
+  "id": "en-food",
+  "name": "Food & Drink",
+  "pairs": [
+    { "civilian": "Burger", "doppelganger": "Sandwich", "aliases": [], "difficulty": "hard" },
+    { "civilian": "Noodles", "doppelganger": "Pasta", "aliases": [], "difficulty": "hard" },
+    { "civilian": "Curry", "doppelganger": "Stew", "aliases": [], "difficulty": "hard" },
+    { "civilian": "Cake", "doppelganger": "Pie", "aliases": [], "difficulty": "hard" },
+    { "civilian": "Juice", "doppelganger": "Soda", "aliases": [], "difficulty": "medium" },
+    { "civilian": "Rice", "doppelganger": "Bread", "aliases": [], "difficulty": "medium" },
+    { "civilian": "Cookie", "doppelganger": "Biscuit", "aliases": [], "difficulty": "hard" },
+    { "civilian": "Soup", "doppelganger": "Broth", "aliases": [], "difficulty": "hard" },
+    { "civilian": "Chicken", "doppelganger": "Beef", "aliases": [], "difficulty": "medium" },
+    { "civilian": "Donut", "doppelganger": "Muffin", "aliases": ["doughnut"], "difficulty": "hard" },
+    { "civilian": "Coffee", "doppelganger": "Tea", "aliases": [], "difficulty": "medium" },
+    { "civilian": "Salad", "doppelganger": "Soup", "aliases": [], "difficulty": "medium" },
+    { "civilian": "Ice cream", "doppelganger": "Yogurt", "aliases": ["icecream"], "difficulty": "medium" },
+    { "civilian": "Chocolate", "doppelganger": "Caramel", "aliases": [], "difficulty": "hard" },
+    { "civilian": "Lemon", "doppelganger": "Lime", "aliases": [], "difficulty": "hard" }
+  ]
+}
